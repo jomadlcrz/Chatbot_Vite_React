@@ -352,3 +352,9 @@ footer p {
 .reset-btn {
   -webkit-tap-highlight-color: transparent; /* Disable tap highlight */
 }
+
+.reset-btn:active,
+..reset-btn:focus {
+  outline: none; /* Remove outline when the element is active or focused */
+  background: none; 
+}
