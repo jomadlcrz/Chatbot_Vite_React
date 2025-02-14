@@ -38,10 +38,17 @@ const App = () => {
     checkIfMobile();
     window.addEventListener('resize', checkIfMobile);
 
+    // Disable body scroll for mobile devices
+    if (isMobile) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
+
     return () => {
       window.removeEventListener('resize', checkIfMobile);
     };
-  }, []);
+  }, [isMobile]);
 
   // Stop bot response
   const handleStopStreaming = () => {
