@@ -7,7 +7,6 @@
 body, html {
   height: 100%;
   font-family: Arial, sans-serif;
-  overflow: hidden;
 }
 
 /* Custom Scrollbar Styling */
@@ -297,8 +296,8 @@ footer p {
   }
 
   textarea {
-    min-height: 80px;
-    max-height: 200px;
+    min-height: 100px;
+    max-height: 300px;
   }
 
   .send-btn svg {
