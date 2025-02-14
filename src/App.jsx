@@ -62,7 +62,7 @@ const App = () => {
       const chat = model.startChat({
         history: messages.map(msg => ({
           role: msg.role,
-          parts: [{ text: msg.text }],
+          parts: [{ text: msg.text }], 
         })),
       });
 
@@ -100,6 +100,7 @@ const App = () => {
 
   useEffect(() => {
     if (textareaRef.current) {
+      // Auto-resize the textarea
       textareaRef.current.style.height = 'auto';
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
     }
@@ -160,7 +161,7 @@ const App = () => {
             onKeyDown={handleKeyDown}
             placeholder="Message Chatbot"
             rows={1}
-            style={{ minHeight: '100px', maxHeight: '300px', overflowY: 'auto' }}
+            style={{ minHeight: '100px', maxHeight: '300px', overflowY: 'auto', resize: 'none' }} // Ensure auto-resizing
           />
           <div className="send-btn-wrapper">
             <button
