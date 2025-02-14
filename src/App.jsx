@@ -17,7 +17,6 @@ const App = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [controller, setController] = useState(null);
-  const [isMobile, setIsMobile] = useState(false);
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
 
@@ -28,27 +27,6 @@ const App = () => {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
-
-  useEffect(() => {
-    // Detect mobile devices based on window size
-    const checkIfMobile = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-
-    checkIfMobile();
-    window.addEventListener('resize', checkIfMobile);
-
-    // Disable body scroll for mobile devices
-    if (isMobile) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'auto';
-    }
-
-    return () => {
-      window.removeEventListener('resize', checkIfMobile);
-    };
-  }, [isMobile]);
 
   // Stop bot response
   const handleStopStreaming = () => {
@@ -114,7 +92,7 @@ const App = () => {
   };
 
   const handleKeyDown = (e) => {
-    if (!isMobile && e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
