@@ -17,6 +17,7 @@ const App = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [controller, setController] = useState(null);
+  const [isMobile, setIsMobile] = useState(false);
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
 
@@ -27,6 +28,20 @@ const App = () => {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  useEffect(() => {
+    // Detect mobile devices based on window size
+    const checkIfMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    checkIfMobile();
+    window.addEventListener('resize', checkIfMobile);
+
+    return () => {
+      window.removeEventListener('resize', checkIfMobile);
+    };
+  }, []);
 
   // Stop bot response
   const handleStopStreaming = () => {
@@ -62,7 +77,7 @@ const App = () => {
       const chat = model.startChat({
         history: messages.map(msg => ({
           role: msg.role,
-          parts: [{ text: msg.text }], 
+          parts: [{ text: msg.text }],
         })),
       });
 
@@ -92,7 +107,7 @@ const App = () => {
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (!isMobile && e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
@@ -100,7 +115,6 @@ const App = () => {
 
   useEffect(() => {
     if (textareaRef.current) {
-      // Auto-resize the textarea
       textareaRef.current.style.height = 'auto';
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
     }
@@ -161,7 +175,7 @@ const App = () => {
             onKeyDown={handleKeyDown}
             placeholder="Message Chatbot"
             rows={1}
-            style={{ minHeight: '100px', maxHeight: '300px', overflowY: 'auto', resize: 'none' }} // Ensure auto-resizing
+            style={{ minHeight: '100px', maxHeight: '300px', overflowY: 'auto' }}
           />
           <div className="send-btn-wrapper">
             <button
