@@ -4,11 +4,6 @@
   padding: 0;
 }
 
-html, body {
-  height: 100%;
-  font-family: Arial, sans-serif;
-}
-
 /* Custom Scrollbar Styling */
 ::-webkit-scrollbar {
   width: 6px;
@@ -173,7 +168,7 @@ textarea::placeholder {
 .chat-container {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 90vh;
   max-width: 800px;
   margin: 0 auto;
   overflow: hidden;
