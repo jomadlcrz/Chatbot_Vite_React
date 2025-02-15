@@ -437,3 +437,27 @@ p code, li code {
   font-family: Consolas, "Courier New", monospace; /* Monospace font for code */
   font-size: 14px; /* Adjust font size as needed */
 }
+
+/* Streaming Indicator */
+.streaming-indicator {
+  display: flex;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.streaming-indicator svg { 
+  color: #007bff;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
