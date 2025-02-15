@@ -4,7 +4,7 @@
   padding: 0;
 }
 
-body, html {
+html, body {
   height: 100%;
   font-family: Arial, sans-serif;
 }
@@ -61,6 +61,7 @@ body, html {
   left: 0;
   right: 0;
   z-index: 1000;
+  height: 60px; /* Fixed height for the header */
 }
 
 .header .name {
@@ -71,12 +72,14 @@ body, html {
 /* Fixed Input Area */
 .input-area {
   position: fixed;
-  bottom: 30px;
-  padding-left: 20px;
-  padding-right: 20px;
+  bottom: 0;
   left: 0;
   right: 0;
   z-index: 1000;
+  background: #fff;
+  padding-left: 15px;
+  padding-right: 15px;
+  margin-bottom: 30px;
 }
 
 .input-wrapper {
@@ -116,8 +119,8 @@ textarea::placeholder {
 }
 
 .send-btn svg {
-  font-size: 35px;
-  color: black;
+  font-size: 30px;
+  color: #007bff;
 }
 
 .send-btn:disabled svg {
@@ -171,11 +174,10 @@ textarea::placeholder {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  padding-top: 60px;
-  padding-bottom: 120px;
   max-width: 800px;
   margin: 0 auto;
   overflow: hidden;
+  position: relative;
 }
 
 /* Chat Box */
@@ -183,7 +185,8 @@ textarea::placeholder {
   flex: 1;
   overflow-y: auto;
   padding: 15px;
-  margin-bottom: 30px;
+  margin-top: 60px; /* Space for the fixed header */
+  margin-bottom: 160px; /* Space for the fixed input area */
 }
 
 .message {
@@ -196,8 +199,16 @@ textarea::placeholder {
 }
 
 .user-message {
-  background: #f1f1f1;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
   margin-left: auto;
+  margin-right: 0;
+  background-color: #007bff;
+  color: white;
+  border-radius: 12px 12px 0 12px;
+  padding: 10px;
+  overflow: hidden;
 }
 
 .bot-message {
@@ -351,4 +362,53 @@ footer p {
 .send-btn-wrapper,
 .reset-btn {
   -webkit-tap-highlight-color: transparent; /* Disable tap highlight */
+}
+
+/* Code Block Container */
+.code-block-container {
+  position: relative;
+  margin: 10px 0;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #2d2d2d;
+}
+
+/* Code Block Header */
+.code-block-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background-color: #2d2d2d;
+  color: #fff;
+  font-size: 14px;
+}
+
+/* Copy Code Button */
+.copy-code-button {
+  background: none;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.3s;
+}
+
+.copy-code-button:hover {
+  color: #007bff;
+}
+
+.copy-code-button:focus {
+  outline: none;
+}
+
+/* Syntax Highlighter */
+.react-syntax-highlighter {
+  margin: 0 !important;
+  padding: 12px !important;
+  border-radius: 0 0 8px 8px;
 }
