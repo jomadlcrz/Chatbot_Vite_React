@@ -3,7 +3,8 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { FaRedo, FaArrowCircleUp, FaStopCircle, FaCopy, FaCheck } from 'react-icons/fa';
+import { FaRedo, FaArrowCircleUp, FaStopCircle, FaCopy, FaCheck } from 'react-icons/fa'; // Added FaCheck for the checkmark
+import { GoDotFill } from 'react-icons/go'; // Import GoDotFill for streaming indicator
 import './App.css';
 
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
@@ -18,19 +19,21 @@ const App = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [controller, setController] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
-  const [copiedIndex, setCopiedIndex] = useState(null);
+  const [copiedIndex, setCopiedIndex] = useState(null); // Track which code block was copied
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
-  const streamingDataRef = useRef('');
 
+  // Save messages to localStorage whenever they change
   useEffect(() => {
     localStorage.setItem('chat_messages', JSON.stringify(messages));
   }, [messages]);
 
+  // Scroll to the bottom of the chat box when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Detect mobile devices based on window size
   useEffect(() => {
     const checkIfMobile = () => {
       setIsMobile(window.innerWidth <= 768);
@@ -44,6 +47,7 @@ const App = () => {
     };
   }, []);
 
+  // Stop bot response
   const handleStopStreaming = () => {
     if (controller) {
       controller.abort();
@@ -52,8 +56,9 @@ const App = () => {
     }
   };
 
+  // Reset conversation and stop ongoing message
   const handleResetConversation = () => {
-    if (controller) controller.abort();
+    if (controller) controller.abort(); // Stop response
     setMessages([]);
     setController(null);
     localStorage.removeItem('chat_messages');
@@ -62,7 +67,7 @@ const App = () => {
   const handleSendMessage = async () => {
     if (input.trim() === '') return;
 
-    if (controller) controller.abort();
+    if (controller) controller.abort(); // Cancel any ongoing response
 
     const newController = new AbortController();
     setController(newController);
@@ -71,7 +76,6 @@ const App = () => {
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
-    streamingDataRef.current = '';
 
     try {
       const chat = model.startChat({
@@ -82,20 +86,18 @@ const App = () => {
       });
 
       const result = await chat.sendMessageStream(input, { signal: newController.signal });
+      let responseText = '';
 
       for await (const chunk of result.stream) {
-        streamingDataRef.current += chunk.text();
-        // Update state every 100ms to reduce re-renders
-        setTimeout(() => {
-          setMessages(prev => {
-            const lastMessage = prev[prev.length - 1];
-            if (lastMessage?.role === 'model') {
-              return [...prev.slice(0, -1), { role: 'model', text: streamingDataRef.current }];
-            } else {
-              return [...prev, { role: 'model', text: streamingDataRef.current }];
-            }
-          });
-        }, 100);
+        responseText += chunk.text();
+        setMessages(prev => {
+          const lastMessage = prev[prev.length - 1];
+          if (lastMessage?.role === 'model') {
+            return [...prev.slice(0, -1), { role: 'model', text: responseText }];
+          } else {
+            return [...prev, { role: 'model', text: responseText }];
+          }
+        });
       }
     } catch (error) {
       if (error.name !== 'AbortError') {
@@ -104,7 +106,7 @@ const App = () => {
       }
     } finally {
       setIsLoading(false);
-      setController(null);
+      setController(null); // Reset controller after completion
     }
   };
 
@@ -115,6 +117,7 @@ const App = () => {
     }
   };
 
+  // Auto-resize textarea based on content
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
@@ -122,10 +125,11 @@ const App = () => {
     }
   }, [input]);
 
+  // Copy code to clipboard
   const handleCopyCode = (code, index) => {
     navigator.clipboard.writeText(code).then(() => {
-      setCopiedIndex(index);
-      setTimeout(() => setCopiedIndex(null), 2000);
+      setCopiedIndex(index); // Set the index of the copied code block
+      setTimeout(() => setCopiedIndex(null), 2000); // Reset after 2 seconds
     }).catch((err) => {
       console.error('Failed to copy code:', err);
     });
@@ -173,6 +177,7 @@ const App = () => {
 
   return (
     <div className="chat-container">
+      {/* Header */}
       <div className="header">
         <div className="name">AI Chatbot</div>
         <div className="reset-btn-wrapper">
@@ -183,6 +188,7 @@ const App = () => {
         </div>
       </div>
 
+      {/* Chat Box */}
       <div className="chat-box">
         {messages.length === 0 && (
           <div className="welcome-message">
@@ -191,8 +197,15 @@ const App = () => {
         )}
         {messages.map(renderMessage)}
         <div ref={messagesEndRef} />
+        {/* Streaming indicator */}
+        {isLoading && (
+          <div className="streaming-indicator">
+            <GoDotFill />
+          </div>
+        )}
       </div>
 
+      {/* Input Area */}
       <div className="input-area">
         <div className="input-wrapper">
           <textarea
@@ -221,6 +234,7 @@ const App = () => {
         </div>
       </div>
 
+      {/* Footer */}
       <footer>
         <p>This Chatbot is for demonstration purposes only.</p>
       </footer>
