@@ -118,6 +118,10 @@ textarea::placeholder {
   color: #007bff;
 }
 
+.send-btn svg:hover {
+  color: #0056b3;
+}
+
 .send-btn:disabled svg {
   color: #ccc;
 }
