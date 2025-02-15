@@ -66,17 +66,17 @@ const App = () => {
 
   const handleSendMessage = async () => {
     if (input.trim() === '') return;
-
+  
     if (controller) controller.abort(); // Cancel any ongoing response
-
+  
     const newController = new AbortController();
     setController(newController);
-
+  
     const userMessage = { role: 'user', text: input };
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
-
+  
     try {
       const chat = model.startChat({
         history: messages.map(msg => ({
@@ -84,20 +84,24 @@ const App = () => {
           parts: [{ text: msg.text }],
         })),
       });
-
+  
       const result = await chat.sendMessageStream(input, { signal: newController.signal });
       let responseText = '';
-
+  
       for await (const chunk of result.stream) {
-        responseText += chunk.text();
-        setMessages(prev => {
-          const lastMessage = prev[prev.length - 1];
-          if (lastMessage?.role === 'model') {
-            return [...prev.slice(0, -1), { role: 'model', text: responseText }];
-          } else {
-            return [...prev, { role: 'model', text: responseText }];
-          }
-        });
+        const words = chunk.text().split(' ');
+        for (const word of words) {
+          responseText += word + ' ';
+          setMessages(prev => {
+            const lastMessage = prev[prev.length - 1];
+            if (lastMessage?.role === 'model') {
+              return [...prev.slice(0, -1), { role: 'model', text: responseText }];
+            } else {
+              return [...prev, { role: 'model', text: responseText }];
+            }
+          });
+          await new Promise(resolve => setTimeout(resolve, 50)); // Adjust the delay as needed
+        }
       }
     } catch (error) {
       if (error.name !== 'AbortError') {
