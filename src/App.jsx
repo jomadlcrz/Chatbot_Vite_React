@@ -3,7 +3,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { FaRedo, FaArrowCircleUp, FaStopCircle } from 'react-icons/fa'; // Icons
+import { FaRedo, FaArrowCircleUp, FaStopCircle, FaCopy, FaCheck } from 'react-icons/fa'; // Added FaCheck for the checkmark
 import './App.css';
 
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
@@ -18,19 +18,22 @@ const App = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [controller, setController] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [copiedIndex, setCopiedIndex] = useState(null); // Track which code block was copied
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
 
+  // Save messages to localStorage whenever they change
   useEffect(() => {
     localStorage.setItem('chat_messages', JSON.stringify(messages));
   }, [messages]);
 
+  // Scroll to the bottom of the chat box when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Detect mobile devices based on window size
   useEffect(() => {
-    // Detect mobile devices based on window size
     const checkIfMobile = () => {
       setIsMobile(window.innerWidth <= 768);
     };
@@ -113,6 +116,7 @@ const App = () => {
     }
   };
 
+  // Auto-resize textarea based on content
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
@@ -120,20 +124,49 @@ const App = () => {
     }
   }, [input]);
 
+  // Copy code to clipboard
+  const handleCopyCode = (code, index) => {
+    navigator.clipboard.writeText(code).then(() => {
+      setCopiedIndex(index); // Set the index of the copied code block
+      setTimeout(() => setCopiedIndex(null), 2000); // Reset after 2 seconds
+    }).catch((err) => {
+      console.error('Failed to copy code:', err);
+    });
+  };
+
   const renderMessage = (msg, index) => (
     <div key={index} className={`message ${msg.role === 'user' ? 'user-message' : 'bot-message'}`}>
       <ReactMarkdown
         components={{
           code({ node, inline, className, children, ...props }) {
             const match = /language-(\w+)/.exec(className || '');
-            return !inline && match ? (
-              <SyntaxHighlighter style={oneDark} language={match[1]} PreTag="div" {...props}>
-                {String(children).replace(/\n$/, '')}
-              </SyntaxHighlighter>
-            ) : (
-              <code className={className} {...props}>{children}</code>
-            );
-          }
+            if (!inline && match) {
+              return (
+                <div className="code-block-container">
+                  <div className="code-block-header">
+                    <span>{match[1]}</span>
+                    <button
+                      className="copy-code-button"
+                      onClick={() => handleCopyCode(String(children).replace(/\n$/, ''), index)}
+                      aria-label="Copy code"
+                    >
+                      {copiedIndex === index ? <FaCheck /> : <FaCopy />}
+                    </button>
+                  </div>
+                  <SyntaxHighlighter
+                    style={oneDark}
+                    language={match[1]}
+                    PreTag="div"
+                    customStyle={{ margin: 0, padding: '12px', borderRadius: '0 0 8px 8px' }}
+                    {...props}
+                  >
+                    {String(children).replace(/\n$/, '')}
+                  </SyntaxHighlighter>
+                </div>
+              );
+            }
+            return <code className={className} {...props}>{children}</code>;
+          },
         }}
       >
         {msg.text}
@@ -147,7 +180,7 @@ const App = () => {
       <div className="header">
         <div className="name">AI Chatbot</div>
         <div className="reset-btn-wrapper">
-          <button className="reset-btn" onClick={handleResetConversation}>
+          <button className="reset-btn" onClick={handleResetConversation} aria-label="Reset Conversation">
             <FaRedo />
           </button>
           <span className="tooltip-text">New chat</span>
@@ -176,12 +209,14 @@ const App = () => {
             placeholder="Message Chatbot"
             rows={1}
             style={{ minHeight: '100px', maxHeight: '300px', overflowY: 'auto' }}
+            aria-label="Type your message"
           />
           <div className="send-btn-wrapper">
             <button
               className="send-btn"
               onClick={isLoading ? handleStopStreaming : handleSendMessage}
               disabled={input.trim() === '' && !isLoading}
+              aria-label={isLoading ? "Stop Response" : "Send Message"}
             >
               {isLoading ? <FaStopCircle /> : <FaArrowCircleUp />}
             </button>
