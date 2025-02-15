@@ -258,6 +258,12 @@ footer p {
   color: #ffcc00;
 }
 
+@media (hover: none) and (pointer: coarse) {
+  .reset-btn:hover {
+    color: inherit !important;
+  }
+}
+
 .reset-btn:focus {
   outline: none;
 }
