@@ -15,7 +15,6 @@ const App = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
-  const [isMobile, setIsMobile] = useState(false);
 
   const workerRef = useRef(null);
   const messagesEndRef = useRef(null);
@@ -25,7 +24,7 @@ const App = () => {
   // Initialize the worker
   const initializeWorker = () => {
     if (workerRef.current) {
-      workerRef.current.terminate(); // Terminate the existing worker
+      workerRef.current.terminate();
     }
     workerRef.current = new Worker(new URL('./worker.js', import.meta.url), { type: 'module' });
 
@@ -52,10 +51,10 @@ const App = () => {
   };
 
   useEffect(() => {
-    initializeWorker(); // Initialize the worker on mount
+    initializeWorker();
     return () => {
       if (workerRef.current) {
-        workerRef.current.terminate(); // Cleanup worker on unmount
+        workerRef.current.terminate();
       }
     };
   }, []);
@@ -96,12 +95,14 @@ const App = () => {
       messages,
       apiKey: import.meta.env.VITE_GEMINI_API_KEY,
     });
+
+    adjustTextareaHeight();
   };
 
   const handleStopStreaming = () => {
     if (workerRef.current) {
       workerRef.current.terminate();
-      initializeWorker(); // Re-initialize the worker
+      initializeWorker();
       setIsLoading(false);
     }
   };
@@ -109,32 +110,30 @@ const App = () => {
   const handleResetConversation = () => {
     if (workerRef.current) {
       workerRef.current.terminate();
-      initializeWorker(); // Re-initialize the worker
+      initializeWorker();
     }
     setMessages([]);
     localStorage.removeItem('chat_messages');
     setIsLoading(false);
   };
 
-    // Detect mobile devices based on window size
-    useEffect(() => {
-      const checkIfMobile = () => {
-        setIsMobile(window.innerWidth <= 768);
-      };
-  
-      checkIfMobile();
-      window.addEventListener('resize', checkIfMobile);
-  
-      return () => {
-        window.removeEventListener('resize', checkIfMobile);
-      };
-    }, []);
+  const adjustTextareaHeight = () => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 300)}px`;
+    }
+  };
 
   const handleKeyDown = (e) => {
-    if (!isMobile && e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
+  };
+
+  const handleChange = (e) => {
+    setInput(e.target.value);
+    adjustTextareaHeight();
   };
 
   const handleCopyCode = (code, index) => {
@@ -157,17 +156,13 @@ const App = () => {
                     <span>{match[1]}</span>
                     <button
                       className="copy-code-button"
+                      title="Copy Code"
                       onClick={() => handleCopyCode(String(children).replace(/\n$/, ''), index)}
                     >
                       {copiedIndex === index ? <FaCheck /> : <FaCopy />}
                     </button>
                   </div>
-                  <SyntaxHighlighter
-                    style={oneDark}
-                    language={match[1]}
-                    PreTag="div"
-                    {...props}
-                  >
+                  <SyntaxHighlighter style={oneDark} language={match[1]} PreTag="div" {...props}>
                     {String(children).replace(/\n$/, '')}
                   </SyntaxHighlighter>
                 </div>
@@ -186,7 +181,7 @@ const App = () => {
     <div className="chat-container">
       <div className="header">
         <div className="name">AI Chatbot</div>
-        <button className="reset-btn" onClick={handleResetConversation}>
+        <button className="reset-btn" title="New chat" onClick={handleResetConversation}>
           <FaRedo />
         </button>
       </div>
@@ -203,18 +198,17 @@ const App = () => {
           <textarea
             ref={textareaRef}
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={handleChange}
             onKeyDown={handleKeyDown}
             placeholder="Message Chatbot"
             rows={1}
-            style={{ minHeight: '100px', maxHeight: '300px', overflowY: 'auto' }}
-            aria-label="Type your message"
+            style={{ minHeight: "100px", maxHeight: "300px", overflowY: "auto" }}
           />
           <button
             className="send-btn"
+            title={isLoading ? "Stop" : "Send"}
             onClick={isLoading ? handleStopStreaming : handleSendMessage}
             disabled={input.trim() === '' && !isLoading}
-            aria-label={isLoading ? 'Stop Response' : 'Send Message'}
           >
             {isLoading ? <FaStopCircle /> : <FaArrowCircleUp />}
           </button>
