@@ -21,14 +21,18 @@ const App = () => {
   const chatBoxRef = useRef(null);
   const textareaRef = useRef(null);
 
-  useEffect(() => {
+  // Initialize the worker
+  const initializeWorker = () => {
+    if (workerRef.current) {
+      workerRef.current.terminate(); // Terminate the existing worker
+    }
     workerRef.current = new Worker(new URL('./worker.js', import.meta.url), { type: 'module' });
 
     workerRef.current.onmessage = (event) => {
       const { type, text, message } = event.data;
 
       if (type === 'update') {
-        setMessages(prev => {
+        setMessages((prev) => {
           const lastMessage = prev[prev.length - 1];
           if (lastMessage?.role === 'model') {
             return [...prev.slice(0, -1), { role: 'model', text }];
@@ -40,13 +44,18 @@ const App = () => {
         setIsLoading(false);
       } else if (type === 'error') {
         console.error('Worker Error:', message);
-        setMessages(prev => [...prev, { role: 'model', text: `Error: ${message}` }]);
+        setMessages((prev) => [...prev, { role: 'model', text: `Error: ${message}` }]);
         setIsLoading(false);
       }
     };
+  };
 
+  useEffect(() => {
+    initializeWorker(); // Initialize the worker on mount
     return () => {
-      workerRef.current.terminate();
+      if (workerRef.current) {
+        workerRef.current.terminate(); // Cleanup worker on unmount
+      }
     };
   }, []);
 
@@ -56,7 +65,7 @@ const App = () => {
 
   useEffect(() => {
     if (isAtBottom) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages, isAtBottom]);
 
@@ -77,7 +86,7 @@ const App = () => {
     if (input.trim() === '') return;
 
     const userMessage = { role: 'user', text: input };
-    setMessages(prev => [...prev, userMessage]);
+    setMessages((prev) => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
 
@@ -88,9 +97,22 @@ const App = () => {
     });
   };
 
+  const handleStopStreaming = () => {
+    if (workerRef.current) {
+      workerRef.current.terminate();
+      initializeWorker(); // Re-initialize the worker
+      setIsLoading(false);
+    }
+  };
+
   const handleResetConversation = () => {
+    if (workerRef.current) {
+      workerRef.current.terminate();
+      initializeWorker(); // Re-initialize the worker
+    }
     setMessages([]);
     localStorage.removeItem('chat_messages');
+    setIsLoading(false);
   };
 
   const handleKeyDown = (e) => {
@@ -161,7 +183,6 @@ const App = () => {
         {isLoading && <div className="streaming-indicator"><GoDotFill /></div>}
       </div>
 
-      {/* Restored Input Area */}
       <div className="input-area">
         <div className="input-wrapper">
           <textarea
@@ -176,16 +197,15 @@ const App = () => {
           />
           <button
             className="send-btn"
-            onClick={isLoading ? handleResetConversation : handleSendMessage}
+            onClick={isLoading ? handleStopStreaming : handleSendMessage}
             disabled={input.trim() === '' && !isLoading}
-            aria-label={isLoading ? "Stop Response" : "Send Message"}
+            aria-label={isLoading ? 'Stop Response' : 'Send Message'}
           >
             {isLoading ? <FaStopCircle /> : <FaArrowCircleUp />}
           </button>
         </div>
       </div>
 
-      {/* Restored Footer */}
       <div className="footer">
         <p>Powered by Gemini</p>
       </div>
