@@ -15,6 +15,7 @@ const App = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
 
   const workerRef = useRef(null);
   const messagesEndRef = useRef(null);
@@ -115,8 +116,22 @@ const App = () => {
     setIsLoading(false);
   };
 
+    // Detect mobile devices based on window size
+    useEffect(() => {
+      const checkIfMobile = () => {
+        setIsMobile(window.innerWidth <= 768);
+      };
+  
+      checkIfMobile();
+      window.addEventListener('resize', checkIfMobile);
+  
+      return () => {
+        window.removeEventListener('resize', checkIfMobile);
+      };
+    }, []);
+
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (!isMobile && e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
