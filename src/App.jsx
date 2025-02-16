@@ -1,14 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { FaRedo, FaArrowCircleUp, FaStopCircle, FaCopy, FaCheck } from 'react-icons/fa'; // Added FaCheck for the checkmark
-import { GoDotFill } from 'react-icons/go'; // Import GoDotFill for streaming indicator
+import { FaRedo, FaArrowCircleUp, FaStopCircle, FaCopy, FaCheck } from 'react-icons/fa';
+import { GoDotFill } from 'react-icons/go';
 import './App.css';
-
-const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 const App = () => {
   const [input, setInput] = useState('');
@@ -17,125 +13,97 @@ const App = () => {
     return savedMessages ? JSON.parse(savedMessages) : [];
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [controller, setController] = useState(null);
-  const [isMobile, setIsMobile] = useState(false);
-  const [copiedIndex, setCopiedIndex] = useState(null); // Track which code block was copied
+  const [copiedIndex, setCopiedIndex] = useState(null);
+  const [isAtBottom, setIsAtBottom] = useState(true);
+
+  const workerRef = useRef(null);
   const messagesEndRef = useRef(null);
+  const chatBoxRef = useRef(null);
   const textareaRef = useRef(null);
 
-  // Save messages to localStorage whenever they change
+  useEffect(() => {
+    workerRef.current = new Worker(new URL('./worker.js', import.meta.url), { type: 'module' });
+
+    workerRef.current.onmessage = (event) => {
+      const { type, text, message } = event.data;
+
+      if (type === 'update') {
+        setMessages(prev => {
+          const lastMessage = prev[prev.length - 1];
+          if (lastMessage?.role === 'model') {
+            return [...prev.slice(0, -1), { role: 'model', text }];
+          } else {
+            return [...prev, { role: 'model', text }];
+          }
+        });
+      } else if (type === 'done') {
+        setIsLoading(false);
+      } else if (type === 'error') {
+        console.error('Worker Error:', message);
+        setMessages(prev => [...prev, { role: 'model', text: `Error: ${message}` }]);
+        setIsLoading(false);
+      }
+    };
+
+    return () => {
+      workerRef.current.terminate();
+    };
+  }, []);
+
   useEffect(() => {
     localStorage.setItem('chat_messages', JSON.stringify(messages));
   }, [messages]);
 
-  // Scroll to the bottom of the chat box when messages change
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  // Detect mobile devices based on window size
-  useEffect(() => {
-    const checkIfMobile = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-
-    checkIfMobile();
-    window.addEventListener('resize', checkIfMobile);
-
-    return () => {
-      window.removeEventListener('resize', checkIfMobile);
-    };
-  }, []);
-
-  // Stop bot response
-  const handleStopStreaming = () => {
-    if (controller) {
-      controller.abort();
-      setController(null);
-      setIsLoading(false);
+    if (isAtBottom) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
-  };
+  }, [messages, isAtBottom]);
 
-  // Reset conversation and stop ongoing message
-  const handleResetConversation = () => {
-    if (controller) controller.abort(); // Stop response
-    setMessages([]);
-    setController(null);
-    localStorage.removeItem('chat_messages');
-  };
+  useEffect(() => {
+    const chatBox = chatBoxRef.current;
+    if (!chatBox) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = chatBox;
+      setIsAtBottom(scrollHeight - (scrollTop + clientHeight) < 10);
+    };
+
+    chatBox.addEventListener('scroll', handleScroll);
+    return () => chatBox.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const handleSendMessage = async () => {
     if (input.trim() === '') return;
-  
-    if (controller) controller.abort(); // Cancel any ongoing response
-  
-    const newController = new AbortController();
-    setController(newController);
-  
+
     const userMessage = { role: 'user', text: input };
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
-  
-    try {
-      const chat = model.startChat({
-        history: messages.map(msg => ({
-          role: msg.role,
-          parts: [{ text: msg.text }],
-        })),
-      });
-  
-      const result = await chat.sendMessageStream(input, { signal: newController.signal });
-      let responseText = '';
-  
-      for await (const chunk of result.stream) {
-        const words = chunk.text().split(' ');
-        for (const word of words) {
-          responseText += word + ' ';
-          setMessages(prev => {
-            const lastMessage = prev[prev.length - 1];
-            if (lastMessage?.role === 'model') {
-              return [...prev.slice(0, -1), { role: 'model', text: responseText }];
-            } else {
-              return [...prev, { role: 'model', text: responseText }];
-            }
-          });
-          await new Promise(resolve => setTimeout(resolve, 50)); // Adjust the delay as needed
-        }
-      }
-    } catch (error) {
-      if (error.name !== 'AbortError') {
-        console.error('Error sending message:', error);
-        setMessages(prev => [...prev, { role: 'model', text: `Error processing your message: ${error.message}` }]);
-      }
-    } finally {
-      setIsLoading(false);
-      setController(null); // Reset controller after completion
-    }
+
+    workerRef.current.postMessage({
+      input,
+      messages,
+      apiKey: import.meta.env.VITE_GEMINI_API_KEY,
+    });
+  };
+
+  const handleResetConversation = () => {
+    setMessages([]);
+    localStorage.removeItem('chat_messages');
   };
 
   const handleKeyDown = (e) => {
-    if (!isMobile && e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
   };
 
-  // Auto-resize textarea based on content
-  useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
-    }
-  }, [input]);
-
-  // Copy code to clipboard
   const handleCopyCode = (code, index) => {
     navigator.clipboard.writeText(code).then(() => {
-      setCopiedIndex(index); // Set the index of the copied code block
-      setTimeout(() => setCopiedIndex(null), 2000); // Reset after 2 seconds
-    }).catch((err) => {
-      console.error('Failed to copy code:', err);
+      setCopiedIndex(index);
+      setTimeout(() => setCopiedIndex(null), 2000);
     });
   };
 
@@ -143,7 +111,7 @@ const App = () => {
     <div key={index} className={`message ${msg.role === 'user' ? 'user-message' : 'bot-message'}`}>
       <ReactMarkdown
         components={{
-          code({ node, inline, className, children, ...props }) {
+          code({ inline, className, children, ...props }) {
             const match = /language-(\w+)/.exec(className || '');
             if (!inline && match) {
               return (
@@ -153,7 +121,6 @@ const App = () => {
                     <button
                       className="copy-code-button"
                       onClick={() => handleCopyCode(String(children).replace(/\n$/, ''), index)}
-                      aria-label="Copy code"
                     >
                       {copiedIndex === index ? <FaCheck /> : <FaCopy />}
                     </button>
@@ -162,7 +129,6 @@ const App = () => {
                     style={oneDark}
                     language={match[1]}
                     PreTag="div"
-                    customStyle={{ margin: 0, padding: '12px', borderRadius: '0 0 8px 8px' }}
                     {...props}
                   >
                     {String(children).replace(/\n$/, '')}
@@ -181,35 +147,21 @@ const App = () => {
 
   return (
     <div className="chat-container">
-      {/* Header */}
       <div className="header">
         <div className="name">AI Chatbot</div>
-        <div className="reset-btn-wrapper">
-          <button className="reset-btn" onClick={handleResetConversation} aria-label="Reset Conversation">
-            <FaRedo />
-          </button>
-          <span className="tooltip-text">New chat</span>
-        </div>
+        <button className="reset-btn" onClick={handleResetConversation}>
+          <FaRedo />
+        </button>
       </div>
 
-      {/* Chat Box */}
-      <div className="chat-box">
-        {messages.length === 0 && (
-          <div className="welcome-message">
-            How can I assist you today?
-          </div>
-        )}
+      <div className="chat-box" ref={chatBoxRef}>
+        {messages.length === 0 && <div className="welcome-message">How can I assist you today?</div>}
         {messages.map(renderMessage)}
         <div ref={messagesEndRef} />
-        {/* Streaming indicator */}
-        {isLoading && (
-          <div className="streaming-indicator">
-            <GoDotFill />
-          </div>
-        )}
+        {isLoading && <div className="streaming-indicator"><GoDotFill /></div>}
       </div>
 
-      {/* Input Area */}
+      {/* Restored Input Area */}
       <div className="input-area">
         <div className="input-wrapper">
           <textarea
@@ -222,26 +174,21 @@ const App = () => {
             style={{ minHeight: '100px', maxHeight: '300px', overflowY: 'auto' }}
             aria-label="Type your message"
           />
-          <div className="send-btn-wrapper">
-            <button
-              className="send-btn"
-              onClick={isLoading ? handleStopStreaming : handleSendMessage}
-              disabled={input.trim() === '' && !isLoading}
-              aria-label={isLoading ? "Stop Response" : "Send Message"}
-            >
-              {isLoading ? <FaStopCircle /> : <FaArrowCircleUp />}
-            </button>
-            <span className="tooltip-text">
-              {isLoading ? "Stop" : input.trim() === '' ? "Message is empty" : "Send"}
-            </span>
-          </div>
+          <button
+            className="send-btn"
+            onClick={isLoading ? handleResetConversation : handleSendMessage}
+            disabled={input.trim() === '' && !isLoading}
+            aria-label={isLoading ? "Stop Response" : "Send Message"}
+          >
+            {isLoading ? <FaStopCircle /> : <FaArrowCircleUp />}
+          </button>
         </div>
       </div>
 
-      {/* Footer */}
-      <footer>
-        <p>This Chatbot is for demonstration purposes only.</p>
-      </footer>
+      {/* Restored Footer */}
+      <div className="footer">
+        <p>Powered by Gemini</p>
+      </div>
     </div>
   );
 };
