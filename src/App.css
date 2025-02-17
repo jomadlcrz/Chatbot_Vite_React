@@ -193,7 +193,7 @@ textarea::placeholder {
   padding: 12px;
   border-radius: 10px;
   max-width: 75%;
-  word-wrap: break-word;
+  width: fit-content;
   white-space: pre-wrap;
 }
 
