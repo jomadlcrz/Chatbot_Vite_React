@@ -13,15 +13,14 @@ const App = () => {
     return savedMessages ? JSON.parse(savedMessages) : [];
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [copiedIndex, setCopiedIndex] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
   const [isAtBottom, setIsAtBottom] = useState(true);
-
+  const [copiedTextIndex, setCopiedTextIndex] = useState(null);
+  const [copiedCodeIndex, setCopiedCodeIndex] = useState(null);
   const workerRef = useRef(null);
   const messagesEndRef = useRef(null);
   const chatBoxRef = useRef(null);
   const textareaRef = useRef(null);
-  
 
   // Initialize the worker
   const initializeWorker = () => {
@@ -90,8 +89,6 @@ const App = () => {
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`; // Adjust to content
     }
   }, [input]); // Runs every time input changes
-  
-  
 
   useEffect(() => {
     const chatBox = chatBoxRef.current;
@@ -145,56 +142,77 @@ const App = () => {
       handleSendMessage();
     }
   };
-  
 
+  const handleCopyText = (text, index) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopiedTextIndex(index);
+      setTimeout(() => setCopiedTextIndex(null), 2000);
+    });
+  };
+  
   const handleCopyCode = (code, index) => {
     navigator.clipboard.writeText(code).then(() => {
-      setCopiedIndex(index);
-      setTimeout(() => setCopiedIndex(null), 2000);
+      setCopiedCodeIndex(index);
+      setTimeout(() => setCopiedCodeIndex(null), 2000);
     });
   };
 
-const renderMessage = (msg, index) => (
-  <div key={index} className={`message ${msg.role === 'user' ? 'user-message' : 'bot-message'}`}>
-    {msg.role === 'user' ? (
-      <div className="user-message-text">{msg.text}</div> // Plain text for user message
-    ) : (
-      <ReactMarkdown
-        components={{
-          code({ inline, className, children, ...props }) {
-            const match = /language-(\w+)/.exec(className || '');
-            if (!inline && match) {
-              return (
-                <div className="code-block-container">
-                  <div className="code-block-header">
-                    <span>{match[1]}</span>
-                    <button
-                      className="copy-code-button"
-                      onClick={() => handleCopyCode(String(children).replace(/\n$/, ''), index)}
-                    >
-                      {copiedIndex === index ? <FaCheck /> : <FaCopy />}
-                    </button>
-                  </div>
-                  <SyntaxHighlighter
-                    style={oneDark}
-                    language={match[1]}
-                    PreTag="div"
-                    {...props}
-                  >
-                    {String(children).replace(/\n$/, '')}
-                  </SyntaxHighlighter>
-                </div>
-              );
-            }
-            return <code className={className} {...props}>{children}</code>;
-          },
-        }}
-      >
-        {msg.text}
-      </ReactMarkdown>
-    )}
-  </div>
-);
+  const renderMessage = (msg, index) => (
+    <div key={index} className={`message ${msg.role === 'user' ? 'user-message' : 'bot-message'}`}>
+      {msg.role === 'user' ? (
+        <div className="user-message-text">{msg.text}</div>
+      ) : (
+        <div className="bot-message-container">
+          <div className="message-content" style={{ padding: '10px' }}>
+            <ReactMarkdown
+              components={{
+                code({ inline, className, children, ...props }) {
+                  const match = /language-(\w+)/.exec(className || '');
+                  if (!inline && match) {
+                    return (
+                      <div className="code-block-container">
+                        <div className="code-block-header">
+                          <span>{match[1]}</span>
+                          <button
+                            className="copy-code-button"
+                            onClick={() => handleCopyCode(String(children).replace(/\n$/, ''), index)}
+                          >
+                            {copiedCodeIndex === index ? <FaCheck /> : <FaCopy />}
+                          </button>
+                        </div>
+                        <SyntaxHighlighter
+                          style={oneDark}
+                          language={match[1]}
+                          PreTag="div"
+                          {...props}
+                        >
+                          {String(children).replace(/\n$/, '')}
+                        </SyntaxHighlighter>
+                      </div>
+                    );
+                  }
+                  return <code className={className} {...props}>{children}</code>;
+                },
+              }}
+            >
+              {msg.text}
+            </ReactMarkdown>
+          </div>
+  
+          {/* Regular text copy button */}
+          {!isLoading && (
+            <button
+              className="copy-text-button"
+              onClick={() => handleCopyText(msg.text, index)}
+            >
+              {copiedTextIndex === index ? <FaCheck /> : <FaCopy />}
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+  
 
   return (
     <div className="chat-container">
@@ -214,16 +232,15 @@ const renderMessage = (msg, index) => (
 
       <div className="input-area">
         <div className="input-wrapper">
-        <textarea
-          ref={textareaRef}  // Attaches the ref to this element
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Message Chatbot"
-          rows={1}
-          style={{ minHeight: '100px', maxHeight: '300px', overflowY: 'auto' }}
-        />
-
+          <textarea
+            ref={textareaRef}  // Attaches the ref to this element
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Message Chatbot"
+            rows={1}
+            style={{ minHeight: '100px', maxHeight: '300px', overflowY: 'auto' }}
+          />
           <button
             className="send-btn"
             onClick={isLoading ? handleStopStreaming : handleSendMessage}
