@@ -24,7 +24,7 @@ const App = () => {
   // Initialize the worker
   const initializeWorker = () => {
     if (workerRef.current) {
-      workerRef.current.terminate();
+      workerRef.current.terminate(); // Terminate the existing worker
     }
     workerRef.current = new Worker(new URL('./worker.js', import.meta.url), { type: 'module' });
 
@@ -51,10 +51,10 @@ const App = () => {
   };
 
   useEffect(() => {
-    initializeWorker();
+    initializeWorker(); // Initialize the worker on mount
     return () => {
       if (workerRef.current) {
-        workerRef.current.terminate();
+        workerRef.current.terminate(); // Cleanup worker on unmount
       }
     };
   }, []);
@@ -95,14 +95,12 @@ const App = () => {
       messages,
       apiKey: import.meta.env.VITE_GEMINI_API_KEY,
     });
-
-    adjustTextareaHeight();
   };
 
   const handleStopStreaming = () => {
     if (workerRef.current) {
       workerRef.current.terminate();
-      initializeWorker();
+      initializeWorker(); // Re-initialize the worker
       setIsLoading(false);
     }
   };
@@ -110,30 +108,23 @@ const App = () => {
   const handleResetConversation = () => {
     if (workerRef.current) {
       workerRef.current.terminate();
-      initializeWorker();
+      initializeWorker(); // Re-initialize the worker
     }
     setMessages([]);
     localStorage.removeItem('chat_messages');
     setIsLoading(false);
   };
 
-  const adjustTextareaHeight = () => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 300)}px`;
-    }
-  };
-
+  // Handle key events
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
+      // Desktop: Enter to send message
       e.preventDefault();
       handleSendMessage();
+    } else if (e.key === 'Enter' && e.shiftKey) {
+      // Desktop: Shift+Enter to wrap the message
+      return; // No action, let the textarea handle wrapping
     }
-  };
-
-  const handleChange = (e) => {
-    setInput(e.target.value);
-    adjustTextareaHeight();
   };
 
   const handleCopyCode = (code, index) => {
@@ -156,13 +147,17 @@ const App = () => {
                     <span>{match[1]}</span>
                     <button
                       className="copy-code-button"
-                      title="Copy Code"
                       onClick={() => handleCopyCode(String(children).replace(/\n$/, ''), index)}
                     >
                       {copiedIndex === index ? <FaCheck /> : <FaCopy />}
                     </button>
                   </div>
-                  <SyntaxHighlighter style={oneDark} language={match[1]} PreTag="div" {...props}>
+                  <SyntaxHighlighter
+                    style={oneDark}
+                    language={match[1]}
+                    PreTag="div"
+                    {...props}
+                  >
                     {String(children).replace(/\n$/, '')}
                   </SyntaxHighlighter>
                 </div>
@@ -181,7 +176,7 @@ const App = () => {
     <div className="chat-container">
       <div className="header">
         <div className="name">AI Chatbot</div>
-        <button className="reset-btn" title="New chat" onClick={handleResetConversation}>
+        <button className="reset-btn" onClick={handleResetConversation}>
           <FaRedo />
         </button>
       </div>
@@ -198,17 +193,18 @@ const App = () => {
           <textarea
             ref={textareaRef}
             value={input}
-            onChange={handleChange}
+            onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Message Chatbot"
             rows={1}
-            style={{ minHeight: "100px", maxHeight: "300px", overflowY: "auto" }}
+            style={{ minHeight: '100px', maxHeight: '300px', overflowY: 'auto' }}
+            aria-label="Type your message"
           />
           <button
             className="send-btn"
-            title={isLoading ? "Stop" : "Send"}
             onClick={isLoading ? handleStopStreaming : handleSendMessage}
             disabled={input.trim() === '' && !isLoading}
+            aria-label={isLoading ? 'Stop Response' : 'Send Message'}
           >
             {isLoading ? <FaStopCircle /> : <FaArrowCircleUp />}
           </button>
