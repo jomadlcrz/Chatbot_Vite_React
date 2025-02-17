@@ -461,3 +461,10 @@ p code, li code {
     opacity: 1;
   }
 }
+
+.copy-text-button {
+  border: none;  /* Remove border */
+  background: transparent; /* Optional: removes background if present */
+  cursor: pointer;
+  padding-left: 5px;
+}
