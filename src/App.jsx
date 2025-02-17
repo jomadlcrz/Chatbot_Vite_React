@@ -154,8 +154,11 @@ const App = () => {
     });
   };
 
-  const renderMessage = (msg, index) => (
-    <div key={index} className={`message ${msg.role === 'user' ? 'user-message' : 'bot-message'}`}>
+const renderMessage = (msg, index) => (
+  <div key={index} className={`message ${msg.role === 'user' ? 'user-message' : 'bot-message'}`}>
+    {msg.role === 'user' ? (
+      <div className="user-message-text">{msg.text}</div> // Plain text for user message
+    ) : (
       <ReactMarkdown
         components={{
           code({ inline, className, children, ...props }) {
@@ -189,8 +192,9 @@ const App = () => {
       >
         {msg.text}
       </ReactMarkdown>
-    </div>
-  );
+    )}
+  </div>
+);
 
   return (
     <div className="chat-container">
