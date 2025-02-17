@@ -83,6 +83,14 @@ const App = () => {
       window.removeEventListener('resize', checkIfMobile);
     };
   }, []);
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';  // Reset height
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`; // Adjust to content
+    }
+  }, [input]); // Runs every time input changes
+  
   
 
   useEffect(() => {
@@ -202,21 +210,20 @@ const App = () => {
 
       <div className="input-area">
         <div className="input-wrapper">
-          <textarea
-            ref={textareaRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Message Chatbot"
-            rows={1}
-            style={{ minHeight: '100px', maxHeight: '300px', overflowY: 'auto' }}
-            aria-label="Type your message"
-          />
+        <textarea
+          ref={textareaRef}  // Attaches the ref to this element
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Message Chatbot"
+          rows={1}
+          style={{ minHeight: '100px', maxHeight: '300px', overflowY: 'auto' }}
+        />
+
           <button
             className="send-btn"
             onClick={isLoading ? handleStopStreaming : handleSendMessage}
             disabled={input.trim() === '' && !isLoading}
-            aria-label={isLoading ? 'Stop Response' : 'Send Message'}
           >
             {isLoading ? <FaStopCircle /> : <FaArrowCircleUp />}
           </button>
