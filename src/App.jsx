@@ -14,12 +14,14 @@ const App = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState(null);
+  const [isMobile, setIsMobile] = useState(false);
   const [isAtBottom, setIsAtBottom] = useState(true);
 
   const workerRef = useRef(null);
   const messagesEndRef = useRef(null);
   const chatBoxRef = useRef(null);
   const textareaRef = useRef(null);
+  
 
   // Initialize the worker
   const initializeWorker = () => {
@@ -70,6 +72,20 @@ const App = () => {
   }, [messages, isAtBottom]);
 
   useEffect(() => {
+    const checkIfMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+  
+    checkIfMobile();
+    window.addEventListener('resize', checkIfMobile);
+  
+    return () => {
+      window.removeEventListener('resize', checkIfMobile);
+    };
+  }, []);
+  
+
+  useEffect(() => {
     const chatBox = chatBoxRef.current;
     if (!chatBox) return;
 
@@ -115,17 +131,13 @@ const App = () => {
     setIsLoading(false);
   };
 
-  // Handle key events
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      // Desktop: Enter to send message
+    if (!isMobile && e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
-    } else if (e.key === 'Enter' && e.shiftKey) {
-      // Desktop: Shift+Enter to wrap the message
-      return; // No action, let the textarea handle wrapping
     }
   };
+  
 
   const handleCopyCode = (code, index) => {
     navigator.clipboard.writeText(code).then(() => {
