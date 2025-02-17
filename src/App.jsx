@@ -108,14 +108,14 @@ const App = () => {
 
   const handleSendMessage = async () => {
     if (input.trim() === '') return;
-
-    const userMessage = { role: 'user', text: input };
+  
+    const userMessage = { role: 'user', text: input.trim() }; // Trim the input here
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
-
+  
     workerRef.current.postMessage({
-      input,
+      input: input.trim(), // Trim the input here as well
       messages,
       apiKey: import.meta.env.VITE_GEMINI_API_KEY,
     });
