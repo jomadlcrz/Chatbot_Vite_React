@@ -185,7 +185,7 @@ textarea::placeholder {
   overflow-y: auto;
   padding: 15px;
   margin-top: 60px; /* Space for the fixed header */
-  margin-bottom: 90px; /* Space for the fixed input area */
+  margin-bottom: 160px; /* Space for the fixed input area */
 }
 
 .message {
