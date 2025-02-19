@@ -4,7 +4,7 @@
   padding: 0;
 }
 
-html, body {
+html {
   height: 100%;
   font-family: Arial, Helvetica, sans-serif;
 }
@@ -150,28 +150,7 @@ textarea::placeholder {
   display: inline-block;
 }
 
-/* Tooltip styling */
-.send-btn-wrapper .tooltip-text {
-  visibility: hidden;
-  opacity: 0;
-  background-color: rgba(0, 0, 0, 0.8);
-  color: #fff;
-  text-align: center;
-  padding: 6px 10px;
-  border-radius: 5px;
-  position: absolute;
-  bottom: 125%;
-  left: 50%;
-  transform: translateX(-50%);
-  white-space: nowrap;
-  font-size: 14px;
-  transition: opacity 0.2s ease-in-out, visibility 0.2s ease-in-out;
-}
 
-.send-btn-wrapper:hover .tooltip-text {
-  visibility: visible;
-  opacity: 1;
-}
 
 /* Chat Container */
 .chat-container {
@@ -325,29 +304,6 @@ textarea::placeholder {
   display: inline-block;
 }
 
-/* Tooltip styling */
-.reset-btn-wrapper .tooltip-text {
-  visibility: hidden;
-  opacity: 0;
-  background-color: rgba(0, 0, 0, 0.8);
-  color: #fff;
-  text-align: center;
-  padding: 6px 10px;
-  border-radius: 5px;
-  position: absolute;
-  top: 125%;
-  left: 50%;
-  transform: translateX(-50%);
-  white-space: nowrap;
-  font-size: 14px;
-  transition: opacity 0.2s ease-in-out, visibility 0.2s ease-in-out;
-}
-
-.reset-btn-wrapper:hover .tooltip-text {
-  visibility: visible;
-  opacity: 1;
-}
-
 /* Media Queries */
 @media (max-width: 768px) {
   .header .name {
@@ -399,14 +355,6 @@ textarea::placeholder {
 
   footer {
     font-size: 10px;
-  }
-}
-
-/* Media Queries */
-@media (max-width: 768px) {
-  .send-btn-wrapper .tooltip-text,
-  .reset-btn-wrapper .tooltip-text {
-    display: none; /* Hide tooltip for non-desktop */
   }
 }
 
