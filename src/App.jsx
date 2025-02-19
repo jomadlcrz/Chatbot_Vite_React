@@ -36,8 +36,7 @@ const App = () => {
         setMessages((prev) => {
           const lastMessage = prev[prev.length - 1];
           if (lastMessage?.role === 'model') {
-            // Update the last message's text directly to avoid flickering
-            return [...prev.slice(0, -1), { ...lastMessage, text }];
+            return [...prev.slice(0, -1), { role: 'model', text }];
           } else {
             return [...prev, { role: 'model', text }];
           }
