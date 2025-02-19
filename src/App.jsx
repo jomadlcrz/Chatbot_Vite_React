@@ -31,30 +31,25 @@ const App = () => {
 
     workerRef.current.onmessage = (event) => {
       const { type, text, message } = event.data;
-    
-      if (type === "update") {
+
+      if (type === 'update') {
         setMessages((prev) => {
           const lastMessage = prev[prev.length - 1];
-    
-          if (lastMessage?.role === "model") {
-            // Append new words instead of replacing entire text
-            return [
-              ...prev.slice(0, -1),
-              { role: "model", text: lastMessage.text + text.replace(lastMessage.text, "") }
-            ];
+          if (lastMessage?.role === 'model') {
+            // Update the last message's text directly to avoid flickering
+            return [...prev.slice(0, -1), { ...lastMessage, text }];
           } else {
-            return [...prev, { role: "model", text }];
+            return [...prev, { role: 'model', text }];
           }
         });
-      } else if (type === "done") {
+      } else if (type === 'done') {
         setIsLoading(false);
-      } else if (type === "error") {
-        console.error("Worker Error:", message);
-        setMessages((prev) => [...prev, { role: "model", text: `Error: ${message}` }]);
+      } else if (type === 'error') {
+        console.error('Worker Error:', message);
+        setMessages((prev) => [...prev, { role: 'model', text: `Error: ${message}` }]);
         setIsLoading(false);
       }
     };
-    
   };
 
   useEffect(() => {
@@ -99,24 +94,15 @@ const App = () => {
   useEffect(() => {
     const chatBox = chatBoxRef.current;
     if (!chatBox) return;
-  
+
     const handleScroll = () => {
       const { scrollTop, scrollHeight, clientHeight } = chatBox;
-      setIsAtBottom(scrollHeight - (scrollTop + clientHeight) < 50); // Increased threshold
+      setIsAtBottom(scrollHeight - (scrollTop + clientHeight) < 10);
     };
-  
-    chatBox.addEventListener("scroll", handleScroll);
-    return () => chatBox.removeEventListener("scroll", handleScroll);
+
+    chatBox.addEventListener('scroll', handleScroll);
+    return () => chatBox.removeEventListener('scroll', handleScroll);
   }, []);
-  
-  useEffect(() => {
-    if (isAtBottom) {
-      requestAnimationFrame(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-      });
-    }
-  }, [messages]);
-  
 
   const handleSendMessage = async () => {
     if (input.trim() === '') return;
