@@ -15,22 +15,23 @@ self.onmessage = async (event) => {
     });
 
     const result = await chat.sendMessageStream(input);
-    let responseText = "";
+    let responseText = '';
 
     for await (const chunk of result.stream) {
-      const words = chunk.text().split(" ");
+      const words = chunk.text().split(' ');
 
       for (const word of words) {
-        responseText += word + " ";
-        postMessage({ type: "update", text: responseText });
+        responseText += word + ' ';
 
-        // Simulate natural typing speed
-        await new Promise(resolve => setTimeout(resolve, 30));
+        // Send response to main thread
+        postMessage({ type: 'update', text: responseText });
+
+        await new Promise(resolve => setTimeout(resolve, 50));
       }
     }
 
-    postMessage({ type: "done" });
+    postMessage({ type: 'done' });
   } catch (error) {
-    postMessage({ type: "error", message: error.message });
+    postMessage({ type: 'error', message: error.message });
   }
 };
