@@ -179,9 +179,9 @@ textarea::placeholder {
   position: relative;
 }
 
-@media (height: 600px) {
+@media (max-height: 600px) {
   .chat-container {
-    height: 90vh;
+    max-height: 90vh;
   }
 }
 
