@@ -4,6 +4,11 @@
   padding: 0;
 }
 
+html, body {
+  height: 100%;
+  overflow: hidden; /* Prevent viewport scrolling */
+}
+
 /* Custom Scrollbar Styling */
 ::-webkit-scrollbar {
   width: 6px;
@@ -172,17 +177,11 @@ textarea::placeholder {
 .chat-container {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100dvh;
   max-width: 800px;
   margin: 0 auto;
   overflow: hidden;
   position: relative;
-}
-
-@media (max-height: 600px) {
-  .chat-container {
-    max-height: 90vh;
-  }
 }
 
 /* Chat Box */
