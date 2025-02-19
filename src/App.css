@@ -181,25 +181,25 @@ textarea::placeholder {
 
 @media (max-width: 768px) {
   .chat-container {
-    height: 100vh;
-    max-height: 100vh;
+    height: 90vh;
+    max-height: 90vh;
   }
 
   .chat-box {
-    max-height: calc(100vh - 220px); /* Adjust based on header and input area height */
+    max-height: calc(90vh - 220px); /* Adjust based on header and input area height */
   }
 }
 
 /* Adjust for medium screens (600px) */
 @media (max-width: 600px) {
   .chat-box {
-    max-height: calc(100vh - 190px);
+    max-height: calc(90vh - 190px);
   }
 }
 
 @media (max-width: 480px) {
   .chat-box {
-    max-height: calc(100vh - 180px); /* Slightly less height for smaller screens */
+    max-height: calc(90vh - 180px); /* Slightly less height for smaller screens */
   }
 }
 
