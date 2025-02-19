@@ -172,12 +172,37 @@ textarea::placeholder {
 .chat-container {
   display: flex;
   flex-direction: column;
-  height: 90vh;
+  height: 100vh;
   max-width: 800px;
   margin: 0 auto;
   overflow: hidden;
   position: relative;
 }
+
+@media (max-width: 768px) {
+  .chat-container {
+    height: 100vh;
+    max-height: 100vh;
+  }
+
+  .chat-box {
+    max-height: calc(100vh - 220px); /* Adjust based on header and input area height */
+  }
+}
+
+/* Adjust for medium screens (600px) */
+@media (max-width: 600px) {
+  .chat-box {
+    max-height: calc(100vh - 190px);
+  }
+}
+
+@media (max-width: 480px) {
+  .chat-box {
+    max-height: calc(100vh - 180px); /* Slightly less height for smaller screens */
+  }
+}
+
 
 /* Chat Box */
 .chat-box {
@@ -466,7 +491,6 @@ p code, li code {
   border: none;  /* Remove border */
   background: transparent; /* Optional: removes background if present */
   cursor: pointer;
-  padding-left: 10px;
-  margin-top: 5px;
+  margin-left: 10px;
   gap: 5px;
 }
