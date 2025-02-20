@@ -373,7 +373,6 @@ code {
   color: black; /* Light text color for inline code */
   padding: 2px 6px; /* Padding around the text */
   border-radius: 4px; /* Rounded corners */
-  font-family: Consolas, "Courier New", monospace; /* Monospace font for code */
   font-size: 14px; /* Adjust font size as needed */
 }
 
@@ -383,7 +382,6 @@ p code, li code {
   color: black; /* Light text color for inline code */
   padding: 2px 6px; /* Padding around the text */
   border-radius: 4px; /* Rounded corners */
-  font-family: Consolas, "Courier New", monospace; /* Monospace font for code */
   font-size: 14px; /* Adjust font size as needed */
 }
 
