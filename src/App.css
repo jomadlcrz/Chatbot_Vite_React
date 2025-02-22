@@ -294,71 +294,80 @@ textarea::placeholder {
   -webkit-tap-highlight-color: transparent; /* Disable tap highlight */
 }
 
-/* Code Block Container */
+/* Code block container */
 .code-block-container {
   position: relative;
-  margin: 10px 0;
-  border-radius: 8px;
+  border-radius: 6px;
   overflow: hidden;
-  background-color: #2d2d2d;
+  margin: 0;
 }
 
-/* Code Block Header */
+/* Code block header (language label + copy button) inside the Markdown block */
 .code-block-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 12px;
-  background-color: #2d2d2d;
+  font-size: 0.75rem;
+  font-weight: bold;
   color: #fff;
-  font-size: 14px;
+  background: rgba(0, 0, 0, 0.75); /* Dark overlay to blend with code */
+  padding: 4px 10px;
+  position: absolute; /* Position inside the code block */
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
 }
 
-/* Copy Code Button */
+/* Language label */
+.code-block-header span {
+  font-family: monospace;
+  color: #ddd;
+}
+
+/* Copy code button */
 .copy-code-button {
   background: none;
   border: none;
-  color: #fff;
   cursor: pointer;
-  font-size: 16px;
-  padding: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: color 0.3s;
+  font-size: 0.85rem;
+  color: #ddd;
+  transition: color 0.2s ease-in-out;
+  padding: 0 5px;
 }
 
 .copy-code-button:hover {
-  color: #007bff;
+  color: #fff;
 }
 
-.copy-code-button:focus {
-  outline: none;
+/* Syntax highlighter wrapper */
+.code-block-container pre {
+  margin: 0;
+  padding: 28px 10px 8px; /* Extra top padding for the header */
+  font-size: 0.9rem;
+  overflow-x: auto;
+  white-space: pre;
+  word-wrap: normal;
+  line-height: 1.4;
+  position: relative; /* Ensure it respects the header */
 }
 
-/* Syntax Highlighter */
-.react-syntax-highlighter {
-  margin: 0 !important;
-  padding: 12px !important;
-  border-radius: 0 0 8px 8px;
+/* Remove extra background and padding behind the code */
+.code-block-container code {
+  background: none !important;
+  display: block;
+  padding: 0;
+  margin: 0;
 }
 
-/* Inline Code Styling */
-code {
-  background-color: #ECECEC; /* Dark background for inline code */
-  color: black; /* Light text color for inline code */
-  padding: 2px 6px; /* Padding around the text */
-  border-radius: 4px; /* Rounded corners */
-  font-size: 14px; /* Adjust font size as needed */
+/* Fix horizontal scrolling alignment */
+.code-block-container pre::-webkit-scrollbar {
+  height: 6px;
 }
 
-/* If you want to style inline code differently within paragraphs or other elements */
-p code, li code {
-  background-color: #ECECEC; /* Dark background for inline code */
-  color: black; /* Light text color for inline code */
-  padding: 2px 6px; /* Padding around the text */
-  border-radius: 4px; /* Rounded corners */
-  font-size: 14px; /* Adjust font size as needed */
+.code-block-container pre::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 3px;
 }
 
 /* Streaming Indicator */
