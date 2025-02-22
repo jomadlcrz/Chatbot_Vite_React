@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
+
 import { FaRedo, FaArrowCircleUp, FaStopCircle, FaCopy, FaCheck } from 'react-icons/fa';
 import { GoDotFill } from 'react-icons/go';
 import './App.css';
@@ -16,7 +17,8 @@ const App = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [copiedTextIndex, setCopiedTextIndex] = useState(null);
-  const [copiedCodeIndex, setCopiedCodeIndex] = useState(null);
+  const [copiedCodeIndex, setCopiedCodeIndex] = useState({});
+
   const workerRef = useRef(null);
   const messagesEndRef = useRef(null);
   const chatBoxRef = useRef(null);
@@ -183,12 +185,22 @@ const App = () => {
     });
   };
   
-  const handleCopyCode = (code, index) => {
+  const handleCopyCode = (code, msgIndex, codeIndex) => {
     navigator.clipboard.writeText(code).then(() => {
-      setCopiedCodeIndex(index);
-      setTimeout(() => setCopiedCodeIndex(null), 2000);
+      setCopiedCodeIndex((prev) => ({
+        ...prev,
+        [`${msgIndex}-${codeIndex}`]: true, // Unique key for each code block
+      }));
+      setTimeout(() => {
+        setCopiedCodeIndex((prev) => {
+          const updated = { ...prev };
+          delete updated[`${msgIndex}-${codeIndex}`];
+          return updated;
+        });
+      }, 2000);
     });
   };
+  
 
   const renderMessage = (msg, index) => (
     <div key={index} className={`message ${msg.role === 'user' ? 'user-message' : 'bot-message'}`}>
@@ -208,13 +220,13 @@ const App = () => {
                           <span>{match[1]}</span>
                           <button
                             className="copy-code-button"
-                            onClick={() => handleCopyCode(String(children).replace(/\n$/, ''), index)}
+                            onClick={() => handleCopyCode(String(children).replace(/\n$/, ''), index, match[1])}
                           >
-                            {copiedCodeIndex === index ? <FaCheck /> : <FaCopy />}
+                            {copiedCodeIndex[`${index}-${match[1]}`] ? <FaCheck /> : <FaCopy />}
                           </button>
                         </div>
                         <SyntaxHighlighter
-                          style={oneDark}
+                          style={oneLight}
                           language={match[1]}
                           PreTag="div"
                           {...props}
@@ -226,6 +238,7 @@ const App = () => {
                   }
                   return <code className={className} {...props}>{children}</code>;
                 },
+                
               }}
             >
               {msg.text}
