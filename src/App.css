@@ -294,80 +294,59 @@ textarea::placeholder {
   -webkit-tap-highlight-color: transparent; /* Disable tap highlight */
 }
 
-/* Code block container */
-.code-block-container {
-  position: relative;
-  border-radius: 6px;
-  overflow: hidden;
-  margin: 0;
+/* Ensure the Markdown container and code block are compact */
+.message-content {
+  max-width: 100%;
+  word-wrap: break-word;
+  font-size: 16px;
+  line-height: 1.6;
 }
 
-/* Code block header (language label + copy button) inside the Markdown block */
+/* Markdown Paragraphs - Tight Spacing */
+.markdown-paragraph {
+  margin: 8px 0;
+  padding-bottom: 0;
+}
+
+/* Code Block Container - No Extra Space */
+.code-block-container {
+  position: relative;
+  background: #f6f8fa;
+  border-radius: 8px;
+  overflow: auto;
+  margin: 10px 0; /* Ensures it's close to text */
+  border: 1px solid #ddd;
+}
+
+/* Code Header - Sticks Directly to the Code */
 .code-block-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.75rem;
+  background: #e1e4e8;
+  padding: 5px 10px;
+  font-size: 14px;
   font-weight: bold;
-  color: #fff;
-  background: rgba(0, 0, 0, 0.75); /* Dark overlay to blend with code */
-  padding: 4px 10px;
-  position: absolute; /* Position inside the code block */
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 2;
+  border-radius: 8px 8px 0 0;
+  border-bottom: 1px solid #ddd;
 }
 
-/* Language label */
-.code-block-header span {
-  font-family: monospace;
-  color: #ddd;
+/* Language Label */
+.code-label {
+  color: #555;
 }
 
-/* Copy code button */
+/* Copy Button */
 .copy-code-button {
-  background: none;
+  background: transparent;
   border: none;
   cursor: pointer;
-  font-size: 0.85rem;
-  color: #ddd;
-  transition: color 0.2s ease-in-out;
-  padding: 0 5px;
+  color: #666;
+  font-size: 14px;
 }
 
 .copy-code-button:hover {
-  color: #fff;
-}
-
-/* Syntax highlighter wrapper */
-.code-block-container pre {
-  margin: 0;
-  padding: 28px 10px 8px; /* Extra top padding for the header */
-  font-size: 0.9rem;
-  overflow-x: auto;
-  white-space: pre;
-  word-wrap: normal;
-  line-height: 1.4;
-  position: relative; /* Ensure it respects the header */
-}
-
-/* Remove extra background and padding behind the code */
-.code-block-container code {
-  background: none !important;
-  display: block;
-  padding: 0;
-  margin: 0;
-}
-
-/* Fix horizontal scrolling alignment */
-.code-block-container pre::-webkit-scrollbar {
-  height: 6px;
-}
-
-.code-block-container pre::-webkit-scrollbar-thumb {
-  background: #ccc;
-  border-radius: 3px;
+  color: #222;
 }
 
 /* Streaming Indicator */
