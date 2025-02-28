@@ -37,23 +37,16 @@ const App = () => {
       if (type === 'update') {
         setMessages((prev) => {
           const lastMessage = prev[prev.length - 1];
-          const updatedMessages =
-            lastMessage?.role === 'model'
-              ? [...prev.slice(0, -1), { role: 'model', text }]
-              : [...prev, { role: 'model', text }];
-    
-          // Use requestAnimationFrame to prevent flicker
-          if (isAtBottom && chatBoxRef.current) {
-            requestAnimationFrame(() => {
-              chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight;
-            });
-          }
-    
-          return updatedMessages;
+          return lastMessage?.role === 'model'
+            ? [...prev.slice(0, -1), { role: 'model', text }]
+            : [...prev, { role: 'model', text }];
         });
+    
+        // ❌ Remove any auto-scroll during streaming
       } else if (type === 'done') {
         setIsLoading(false);
     
+        // ✅ Allow auto-scroll only if the user was at the bottom before streaming started
         if (isAtBottom && chatBoxRef.current) {
           requestAnimationFrame(() => {
             chatBoxRef.current.scrollTo({
@@ -77,6 +70,7 @@ const App = () => {
         }
       }
     };
+    
   };
 
   useEffect(() => {
@@ -124,15 +118,17 @@ const App = () => {
   
     const handleScroll = () => {
       const { scrollTop, scrollHeight, clientHeight } = chatBox;
-      setIsAtBottom(scrollHeight - (scrollTop + clientHeight) < 5); // Within 5px of bottom
+  
+      // ✅ Update `isAtBottom` ONLY IF the bot is NOT streaming
+      if (!isLoading) {
+        setIsAtBottom(scrollHeight - (scrollTop + clientHeight) < 5);
+      }
     };
   
     chatBox.addEventListener('scroll', handleScroll);
     return () => chatBox.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [isLoading]);
   
-  
-
   const handleSendMessage = async () => {
     if (input.trim() === '') return;
   
