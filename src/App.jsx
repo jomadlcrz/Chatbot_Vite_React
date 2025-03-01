@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
-
 import { FaRedo, FaArrowCircleUp, FaStopCircle, FaCopy, FaCheck } from 'react-icons/fa';
 import { GoDotFill } from 'react-icons/go';
 import './App.css';
@@ -41,9 +40,10 @@ const App = () => {
             ? [...prev.slice(0, -1), { role: 'model', text }]
             : [...prev, { role: 'model', text }];
         });
-    
-        // ❌ Remove any auto-scroll during streaming
-      } else if (type === 'done') {
+      
+        // ✅ Do NOT scroll while streaming
+      }
+       else if (type === 'done') {
         setIsLoading(false);
     
         // ✅ Allow auto-scroll only if the user was at the bottom before streaming started
