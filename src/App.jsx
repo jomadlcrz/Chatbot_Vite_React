@@ -49,10 +49,10 @@ const App = () => {
   };
 
   useEffect(() => {
-    initializeWorker(); // Initialize the worker on mount
+    initializeWorker();
     return () => {
       if (workerRef.current) {
-        workerRef.current.terminate(); // Cleanup worker on unmount
+        workerRef.current.terminate();
       }
     };
   }, []);
@@ -76,10 +76,10 @@ const App = () => {
 
   useEffect(() => {
     if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto'; // Reset height
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`; // Adjust to content
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
     }
-  }, [input]); // Runs every time input changes
+  }, [input]);
 
   const handleSendMessage = async () => {
     if (input.trim() === '') return;
@@ -99,7 +99,7 @@ const App = () => {
   const handleStopStreaming = () => {
     if (workerRef.current) {
       workerRef.current.terminate();
-      initializeWorker(); // Re-initialize the worker
+      initializeWorker();
       setIsLoading(false);
     }
   };
@@ -107,7 +107,7 @@ const App = () => {
   const handleResetConversation = () => {
     if (workerRef.current) {
       workerRef.current.terminate();
-      initializeWorker(); // Re-initialize the worker
+      initializeWorker();
     }
     setMessages([]);
     localStorage.removeItem('chat_messages');
@@ -132,7 +132,7 @@ const App = () => {
     navigator.clipboard.writeText(code).then(() => {
       setCopiedCodeIndex((prev) => ({
         ...prev,
-        [`${msgIndex}-${codeIndex}`]: true, // Unique key for each code block
+        [`${msgIndex}-${codeIndex}`]: true,
       }));
       setTimeout(() => {
         setCopiedCodeIndex((prev) => {
@@ -167,12 +167,7 @@ const App = () => {
                             {copiedCodeIndex[`${index}-${match[1]}`] ? <FaCheck /> : <FaCopy />}
                           </button>
                         </div>
-                        <SyntaxHighlighter
-                          style={oneLight}
-                          language={match[1]}
-                          PreTag="div"
-                          {...props}
-                        >
+                        <SyntaxHighlighter style={oneLight} language={match[1]} PreTag="div" {...props}>
                           {String(children).replace(/\n$/, '')}
                         </SyntaxHighlighter>
                       </div>
@@ -212,17 +207,20 @@ const App = () => {
       </div>
 
       <div className="input-area">
-        <textarea
-          ref={textareaRef}
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Message Chatbot"
-          rows={1}
-        />
-        <button className="send-btn" onClick={isLoading ? handleStopStreaming : handleSendMessage} disabled={input.trim() === '' && !isLoading}>
-          {isLoading ? <FaStopCircle /> : <FaArrowCircleUp />}
-        </button>
+        <div className="input-wrapper">
+          <textarea
+            ref={textareaRef}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Message Chatbot"
+            rows={1}
+            style={{ minHeight: '100px', maxHeight: '300px', overflowY: 'auto' }}
+          />
+          <button className="send-btn" onClick={isLoading ? handleStopStreaming : handleSendMessage} disabled={input.trim() === '' && !isLoading}>
+            {isLoading ? <FaStopCircle /> : <FaArrowCircleUp />}
+          </button>
+        </div>
       </div>
 
       <div className="footer">
