@@ -14,12 +14,10 @@ const App = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [isAtBottom, setIsAtBottom] = useState(true);
   const [copiedTextIndex, setCopiedTextIndex] = useState(null);
   const [copiedCodeIndex, setCopiedCodeIndex] = useState({});
 
   const workerRef = useRef(null);
-  const messagesEndRef = useRef(null);
   const chatBoxRef = useRef(null);
   const textareaRef = useRef(null);
 
@@ -32,7 +30,7 @@ const App = () => {
 
     workerRef.current.onmessage = (event) => {
       const { type, text, message } = event.data;
-    
+
       if (type === 'update') {
         setMessages((prev) => {
           const lastMessage = prev[prev.length - 1];
@@ -40,37 +38,14 @@ const App = () => {
             ? [...prev.slice(0, -1), { role: 'model', text }]
             : [...prev, { role: 'model', text }];
         });
-      
-        // ✅ Do NOT scroll while streaming
-      }
-       else if (type === 'done') {
+      } else if (type === 'done') {
         setIsLoading(false);
-    
-        // ✅ Allow auto-scroll only if the user was at the bottom before streaming started
-        if (isAtBottom && chatBoxRef.current) {
-          requestAnimationFrame(() => {
-            chatBoxRef.current.scrollTo({
-              top: chatBoxRef.current.scrollHeight,
-              behavior: 'smooth',
-            });
-          });
-        }
       } else if (type === 'error') {
         console.error('Worker Error:', message);
         setMessages((prev) => [...prev, { role: 'model', text: `Error: ${message}` }]);
         setIsLoading(false);
-    
-        if (isAtBottom && chatBoxRef.current) {
-          requestAnimationFrame(() => {
-            chatBoxRef.current.scrollTo({
-              top: chatBoxRef.current.scrollHeight,
-              behavior: 'smooth',
-            });
-          });
-        }
       }
     };
-    
   };
 
   useEffect(() => {
@@ -87,19 +62,13 @@ const App = () => {
   }, [messages]);
 
   useEffect(() => {
-    if (isAtBottom) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messages, isAtBottom]);
-
-  useEffect(() => {
     const checkIfMobile = () => {
       setIsMobile(window.innerWidth <= 768);
     };
-  
+
     checkIfMobile();
     window.addEventListener('resize', checkIfMobile);
-  
+
     return () => {
       window.removeEventListener('resize', checkIfMobile);
     };
@@ -107,48 +76,26 @@ const App = () => {
 
   useEffect(() => {
     if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';  // Reset height
+      textareaRef.current.style.height = 'auto'; // Reset height
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`; // Adjust to content
     }
   }, [input]); // Runs every time input changes
 
-  useEffect(() => {
-    const chatBox = chatBoxRef.current;
-    if (!chatBox) return;
-  
-    const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } = chatBox;
-  
-      // ✅ Update `isAtBottom` ONLY IF the bot is NOT streaming
-      if (!isLoading) {
-        setIsAtBottom(scrollHeight - (scrollTop + clientHeight) < 5);
-      }
-    };
-  
-    chatBox.addEventListener('scroll', handleScroll);
-    return () => chatBox.removeEventListener('scroll', handleScroll);
-  }, [isLoading]);
-  
   const handleSendMessage = async () => {
     if (input.trim() === '') return;
-  
+
     const userMessage = { role: 'user', text: input.trim() };
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
-  
-    // Scroll to bottom after message is added
-    setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, 30);
-  
+
     workerRef.current.postMessage({
       input: input.trim(),
       messages,
       apiKey: import.meta.env.VITE_GEMINI_API_KEY,
     });
   };
-  
+
   const handleStopStreaming = () => {
     if (workerRef.current) {
       workerRef.current.terminate();
@@ -180,7 +127,7 @@ const App = () => {
       setTimeout(() => setCopiedTextIndex(null), 2000);
     });
   };
-  
+
   const handleCopyCode = (code, msgIndex, codeIndex) => {
     navigator.clipboard.writeText(code).then(() => {
       setCopiedCodeIndex((prev) => ({
@@ -196,7 +143,6 @@ const App = () => {
       }, 2000);
     });
   };
-  
 
   const renderMessage = (msg, index) => (
     <div key={index} className={`message ${msg.role === 'user' ? 'user-message' : 'bot-message'}`}>
@@ -234,19 +180,14 @@ const App = () => {
                   }
                   return <code className={className} {...props}>{children}</code>;
                 },
-                
               }}
             >
               {msg.text}
             </ReactMarkdown>
           </div>
-  
-          {/* Regular text copy button */}
+
           {!isLoading && (
-            <button
-              className="copy-text-button"
-              onClick={() => handleCopyText(msg.text, index)}
-            >
+            <button className="copy-text-button" onClick={() => handleCopyText(msg.text, index)}>
               {copiedTextIndex === index ? <FaCheck /> : <FaCopy />}
             </button>
           )}
@@ -254,7 +195,6 @@ const App = () => {
       )}
     </div>
   );
-  
 
   return (
     <div className="chat-container">
@@ -268,29 +208,21 @@ const App = () => {
       <div className="chat-box" ref={chatBoxRef}>
         {messages.length === 0 && <div className="welcome-message">How can I assist you today?</div>}
         {messages.map(renderMessage)}
-        <div ref={messagesEndRef} />
         {isLoading && <div className="streaming-indicator"><GoDotFill /></div>}
       </div>
 
       <div className="input-area">
-        <div className="input-wrapper">
-          <textarea
-            ref={textareaRef}  // Attaches the ref to this element
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Message Chatbot"
-            rows={1}
-            style={{ minHeight: '100px', maxHeight: '300px', overflowY: 'auto' }}
-          />
-          <button
-            className="send-btn"
-            onClick={isLoading ? handleStopStreaming : handleSendMessage}
-            disabled={input.trim() === '' && !isLoading}
-          >
-            {isLoading ? <FaStopCircle /> : <FaArrowCircleUp />}
-          </button>
-        </div>
+        <textarea
+          ref={textareaRef}
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Message Chatbot"
+          rows={1}
+        />
+        <button className="send-btn" onClick={isLoading ? handleStopStreaming : handleSendMessage} disabled={input.trim() === '' && !isLoading}>
+          {isLoading ? <FaStopCircle /> : <FaArrowCircleUp />}
+        </button>
       </div>
 
       <div className="footer">
