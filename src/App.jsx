@@ -148,86 +148,116 @@ const App = () => {
     });
   };
 
-const renderMessage = (msg, index) => (
-  <div key={index} className={`message ${msg.role === 'user' ? 'user-message' : 'bot-message'}`}>
-    {msg.role === 'user' ? (
-      <div className="user-message-text">{msg.text}</div>
-    ) : (
-      <div className="bot-message-container">
-        <div className="message-content" style={{ padding: '10px' }}>
-          <ReactMarkdown
-            components={{
-              code({ inline, className, children, ...props }) {
-                const match = /language-(\w+)/.exec(className || '');
-                if (!inline && match) {
-                  return (
-                    <div className="code-block-container">
-                      <div className="code-block-header">
-                        <span>{match[1]}</span>
-                        <OverlayTrigger
-                          placement="top"
-                          overlay={<Tooltip id="tooltip-copy-code">Copy Code</Tooltip>}
-                        >
-                          <button
-                            className="copy-code-button"
-                            onClick={() =>
-                              handleCopyCode(String(children).replace(/\n$/, ''), index, match[1])
-                            }
-                          >
-                            {copiedCodeIndex[`${index}-${match[1]}`] ? <FaCheck /> : <FaCopy />}
-                          </button>
-                        </OverlayTrigger>
+  const renderMessage = (msg, index) => (
+    <div key={index} className={`message ${msg.role === 'user' ? 'user-message' : 'bot-message'}`}>
+      {msg.role === 'user' ? (
+        <div className="user-message-text">{msg.text}</div>
+      ) : (
+        <div className="bot-message-container">
+          <div className="message-content" style={{ padding: '10px' }}>
+            <ReactMarkdown
+              components={{
+                code({ inline, className, children, ...props }) {
+                  const match = /language-(\w+)/.exec(className || '');
+                  if (!inline && match) {
+                    return (
+                      <div className="code-block-container">
+                        <div className="code-block-header">
+                          <span>{match[1]}</span>
+                          {/* Only render Tooltip if not on mobile */}
+                          {!isMobile && (
+                            <OverlayTrigger
+                              placement="top"
+                              overlay={<Tooltip id="tooltip-copy-code">Copy Code</Tooltip>}
+                            >
+                              <button
+                                className="copy-code-button"
+                                onClick={() =>
+                                  handleCopyCode(String(children).replace(/\n$/, ''), index, match[1])
+                                }
+                              >
+                                {copiedCodeIndex[`${index}-${match[1]}`] ? <FaCheck /> : <FaCopy />}
+                              </button>
+                            </OverlayTrigger>
+                          )}
+                          {/* Render button normally on mobile */}
+                          {isMobile && (
+                            <button
+                              className="copy-code-button"
+                              onClick={() =>
+                                handleCopyCode(String(children).replace(/\n$/, ''), index, match[1])
+                              }
+                            >
+                              {copiedCodeIndex[`${index}-${match[1]}`] ? <FaCheck /> : <FaCopy />}
+                            </button>
+                          )}
+                        </div>
+                        <SyntaxHighlighter style={oneLight} language={match[1]} PreTag="div" {...props}>
+                          {String(children).replace(/\n$/, '')}
+                        </SyntaxHighlighter>
                       </div>
-                      <SyntaxHighlighter style={oneLight} language={match[1]} PreTag="div" {...props}>
-                        {String(children).replace(/\n$/, '')}
-                      </SyntaxHighlighter>
-                    </div>
-                  );
-                }
-                return <code className={className} {...props}>{children}</code>;
-              },
-            }}
-          >
-            {msg.text}
-          </ReactMarkdown>
-        </div>
-
-        {/* Copy Text Button */}
-        {!isLoading && (
-          <OverlayTrigger
-            placement="top"
-            overlay={<Tooltip id="tooltip-copy-text">Copy Text</Tooltip>}
-          >
+                    );
+                  }
+                  return <code className={className} {...props}>{children}</code>;
+                },
+              }}
+            >
+              {msg.text}
+            </ReactMarkdown>
+          </div>
+  
+          {/* Only render Tooltip if not on mobile */}
+          {!isLoading && !isMobile && (
+            <OverlayTrigger
+              placement="top"
+              overlay={<Tooltip id="tooltip-copy-text">Copy Text</Tooltip>}
+            >
+              <button className="copy-text-button" onClick={() => handleCopyText(msg.text, index)}>
+                {copiedTextIndex === index ? <FaCheck /> : <FaCopy />}
+              </button>
+            </OverlayTrigger>
+          )}
+  
+          {/* Render button normally on mobile */}
+          {!isLoading && isMobile && (
             <button className="copy-text-button" onClick={() => handleCopyText(msg.text, index)}>
               {copiedTextIndex === index ? <FaCheck /> : <FaCopy />}
             </button>
-          </OverlayTrigger>
-        )}
-      </div>
-    )}
-  </div>
-);
-
+          )}
+        </div>
+      )}
+    </div>
+  );
+  
   return (
     <div className="chat-container">
       <div className="header">
         <div className="name">Chatbot</div>
-        <OverlayTrigger
-          placement="right"
-          overlay={<Tooltip id="tooltip-reset">Reset Conversation</Tooltip>}
-        >
+        {/* Only render Tooltip if not on mobile */}
+        {!isMobile && (
+          <OverlayTrigger
+            placement="right"
+            overlay={<Tooltip id="tooltip-reset">Reset Conversation</Tooltip>}
+          >
+            <button className="reset-btn" onClick={handleResetConversation}>
+              <FaRedo />
+            </button>
+          </OverlayTrigger>
+        )}
+        {/* Render button normally on mobile */}
+        {isMobile && (
           <button className="reset-btn" onClick={handleResetConversation}>
             <FaRedo />
           </button>
-        </OverlayTrigger>
+        )}
       </div>
-
+  
       <div className="chat-box" ref={chatBoxRef}>
         {messages.length === 0 && <div className="welcome-message">How can I assist you today?</div>}
         {messages.map(renderMessage)}
         {isLoading && <div className="streaming-indicator"><GoDotFill /></div>}
       </div>
-
+  
       <div className="input-area">
         <div className="input-wrapper">
           <textarea
@@ -239,10 +269,24 @@ const renderMessage = (msg, index) => (
             rows={1}
             style={{ minHeight: '100px', maxHeight: '300px', overflowY: 'auto', resize: 'none' }}
           />
-          <OverlayTrigger
-            placement="top"
-            overlay={<Tooltip id="tooltip-send">{isLoading ? 'Stop' : 'Send Message'}</Tooltip>}
-          >
+          {/* Only render Tooltip if not on mobile */}
+          {!isMobile && (
+            <OverlayTrigger
+              placement="top"
+              overlay={<Tooltip id="tooltip-send">{isLoading ? 'Stop' : 'Send Message'}</Tooltip>}
+            >
+              <button
+                className="send-btn"
+                onClick={isLoading ? handleStopStreaming : handleSendMessage}
+                disabled={input.trim() === '' && !isLoading}
+              >
+                {isLoading ? <FaStopCircle /> : <FaArrowCircleUp />}
+              </button>
+            </OverlayTrigger>
+          )}
+  
+          {/* Render button normally on mobile */}
+          {isMobile && (
             <button
               className="send-btn"
               onClick={isLoading ? handleStopStreaming : handleSendMessage}
@@ -250,10 +294,10 @@ const renderMessage = (msg, index) => (
             >
               {isLoading ? <FaStopCircle /> : <FaArrowCircleUp />}
             </button>
-          </OverlayTrigger>
+          )}
         </div>
       </div>
-
+  
       <div className="footer">
         <p>Powered by Gemini</p>
       </div>
