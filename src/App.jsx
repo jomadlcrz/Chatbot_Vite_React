@@ -273,24 +273,34 @@ const App = () => {
           {!isMobile && (
             <OverlayTrigger
               placement="top"
-              overlay={<Tooltip id="tooltip-send">{isLoading ? 'Stop' : 'Send Message'}</Tooltip>}
+              overlay={
+                <Tooltip id="tooltip-send">
+                  {isLoading ? 'Stop' : input.trim() === '' ? 'Message is empty' : 'Send'}
+                </Tooltip>
+              }
             >
               <button
-                className="send-btn"
+                className={`send-btn ${input.trim() === '' && !isLoading ? 'disabled-btn' : ''}`}
                 onClick={isLoading ? handleStopStreaming : handleSendMessage}
                 disabled={input.trim() === '' && !isLoading}
+                style={{
+                  cursor: input.trim() === '' && !isLoading ? 'not-allowed' : 'pointer', // Adjust cursor style
+                }}
               >
                 {isLoading ? <FaStopCircle /> : <FaArrowCircleUp />}
               </button>
             </OverlayTrigger>
           )}
-  
+
           {/* Render button normally on mobile */}
           {isMobile && (
             <button
               className="send-btn"
               onClick={isLoading ? handleStopStreaming : handleSendMessage}
               disabled={input.trim() === '' && !isLoading}
+              style={{
+                cursor: input.trim() === '' && !isLoading ? 'not-allowed' : 'pointer', // Adjust cursor style
+              }}
             >
               {isLoading ? <FaStopCircle /> : <FaArrowCircleUp />}
             </button>
