@@ -380,3 +380,19 @@ textarea::placeholder {
   margin-left: 10px;
   gap: 5px;
 }
+.message-content {
+  max-width: 100%;
+  white-space: pre-wrap; /* This will enable markdown text to wrap */
+}
+
+code, pre {
+  word-wrap: break-word; /* Allow code to break into a new line if needed */
+  overflow-wrap: break-word; /* Breaks long code lines */
+  white-space: normal; /* Allows normal wrapping */
+}
+
+/* Tooltip styling to avoid layout shift */
+.tooltip {
+  position: fixed !important;  /* Position it fixed */
+  z-index: 9999;  /* Make sure it's above other elements */
+}
