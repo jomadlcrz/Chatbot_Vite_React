@@ -4,17 +4,21 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { FaRedo, FaArrowCircleUp, FaStopCircle, FaCopy, FaCheck } from 'react-icons/fa';
 import { GoDotFill } from 'react-icons/go';
-import { Tooltip, OverlayTrigger } from 'react-bootstrap';  // Import necessary components
-import 'bootstrap/dist/css/bootstrap.min.css'; // Import Bootstrap CSS
+import { Tooltip, OverlayTrigger } from 'react-bootstrap';
+import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
-
-
+import remarkGfm from 'remark-gfm';
 
 const App = () => {
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState(() => {
-    const savedMessages = localStorage.getItem('chat_messages');
-    return savedMessages ? JSON.parse(savedMessages) : [];
+    try {
+      const savedMessages = localStorage.getItem('chat_messages');
+      return savedMessages ? JSON.parse(savedMessages) : [];
+    } catch (error) {
+      console.error('Error loading saved messages:', error);
+      return [];
+    }
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -24,32 +28,110 @@ const App = () => {
   const workerRef = useRef(null);
   const chatBoxRef = useRef(null);
   const textareaRef = useRef(null);
+  const autoScrollEnabledRef = useRef(true);
+  const userHasScrolledRef = useRef(false);
+  const lastScrollTopRef = useRef(0);
+  const scrollTimeoutRef = useRef(null);
 
-  // Initialize the worker
-  const initializeWorker = () => {
-    if (workerRef.current) {
-      workerRef.current.terminate(); // Terminate the existing worker
+  // Manage auto-scrolling with improved user scroll detection
+  const scrollToBottom = (force = false) => {
+    if (!chatBoxRef.current) return;
+    
+    if (force || autoScrollEnabledRef.current) {
+      const chatBox = chatBoxRef.current;
+      chatBox.scrollTop = chatBox.scrollHeight;
     }
-    workerRef.current = new Worker(new URL('./worker.js', import.meta.url), { type: 'module' });
+  };
 
-    workerRef.current.onmessage = (event) => {
-      const { type, text, message } = event.data;
+  // Handle new message or message update
+  useEffect(() => {
+    if (messages.length > 0) {
+      // If this is a new user message, force scroll and re-enable auto-scroll
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage.role === 'user') {
+        autoScrollEnabledRef.current = true;
+        userHasScrolledRef.current = false;
+        scrollToBottom(true);
+      } else {
+        // For bot messages, only scroll if auto-scroll is enabled
+        scrollToBottom();
+      }
+    }
+  }, [messages]);
 
-      if (type === 'update') {
-        setMessages((prev) => {
-          const lastMessage = prev[prev.length - 1];
-          return lastMessage?.role === 'model'
-            ? [...prev.slice(0, -1), { role: 'model', text }]
-            : [...prev, { role: 'model', text }];
-        });
-      } else if (type === 'done') {
-        setIsLoading(false);
-      } else if (type === 'error') {
-        console.error('Worker Error:', message);
-        setMessages((prev) => [...prev, { role: 'model', text: `Error: ${message}` }]);
-        setIsLoading(false);
+  // Set up scroll event detection
+  useEffect(() => {
+    if (!chatBoxRef.current) return;
+    
+    const chatBox = chatBoxRef.current;
+    
+    const handleScroll = (e) => {
+      // If programmatic scrolling is happening, ignore this event
+      if (scrollTimeoutRef.current) return;
+      
+      const { scrollTop, scrollHeight, clientHeight } = chatBox;
+      const isAtBottom = Math.abs(scrollHeight - clientHeight - scrollTop) < 5;
+      const isScrollingUp = scrollTop < lastScrollTopRef.current;
+      
+      // Store the current scroll position for next comparison
+      lastScrollTopRef.current = scrollTop;
+      
+      // If user is scrolling up, disable auto-scroll
+      if (isScrollingUp && !isAtBottom) {
+        autoScrollEnabledRef.current = false;
+        userHasScrolledRef.current = true;
+      }
+      
+      // If user manually scrolled to bottom, re-enable auto-scroll
+      if (isAtBottom && userHasScrolledRef.current) {
+        autoScrollEnabledRef.current = true;
+        userHasScrolledRef.current = false;
       }
     };
+
+    chatBox.addEventListener('scroll', handleScroll);
+    return () => chatBox.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const initializeWorker = () => {
+    if (workerRef.current) {
+      workerRef.current.terminate();
+    }
+
+    try {
+      workerRef.current = new Worker(new URL('./worker.js', import.meta.url), { type: 'module' });
+
+      workerRef.current.onmessage = (event) => {
+        const { type, text, message } = event.data;
+
+        if (type === 'update') {
+          setMessages((prev) => {
+            const lastMessage = prev[prev.length - 1];
+            return lastMessage?.role === 'model'
+              ? [...prev.slice(0, -1), { role: 'model', text }]
+              : [...prev, { role: 'model', text }];
+          });
+        } else if (type === 'done') {
+          setIsLoading(false);
+        } else if (type === 'error') {
+          console.error('Worker Error:', message);
+          setMessages((prev) => [...prev, { role: 'model', text: `Error: ${message}` }]);
+          setIsLoading(false);
+        }
+      };
+
+      workerRef.current.onerror = (error) => {
+        console.error('Worker initialization error:', error);
+        setIsLoading(false);
+        setMessages((prev) => [...prev, { 
+          role: 'model', 
+          text: 'Sorry, there was an error with the chatbot service. Please try again later.' 
+        }]);
+      };
+    } catch (error) {
+      console.error('Failed to initialize worker:', error);
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -62,7 +144,11 @@ const App = () => {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('chat_messages', JSON.stringify(messages));
+    try {
+      localStorage.setItem('chat_messages', JSON.stringify(messages));
+    } catch (error) {
+      console.error('Error saving messages to localStorage:', error);
+    }
   }, [messages]);
 
   useEffect(() => {
@@ -156,19 +242,30 @@ const App = () => {
         <div className="bot-message-container">
           <div className="message-content" style={{ padding: '10px' }}>
             <ReactMarkdown
+              children={msg.text}
+              remarkPlugins={[remarkGfm]}
               components={{
                 code({ inline, className, children, ...props }) {
                   const match = /language-(\w+)/.exec(className || '');
                   if (!inline && match) {
+                    const codeId = `${index}-${match[1]}`;
                     return (
                       <div className="code-block-container">
                         <div className="code-block-header">
                           <span>{match[1]}</span>
-                          {/* Only render Tooltip if not on mobile */}
-                          {!isMobile && (
+                          {isMobile ? (
+                            <button
+                              className="copy-code-button"
+                              onClick={() =>
+                                handleCopyCode(String(children).replace(/\n$/, ''), index, match[1])
+                              }
+                            >
+                              {copiedCodeIndex[codeId] ? <FaCheck /> : <FaCopy />}
+                            </button>
+                          ) : (
                             <OverlayTrigger
                               placement="top"
-                              overlay={<Tooltip id="tooltip-copy-code">Copy Code</Tooltip>}
+                              overlay={<Tooltip id={`tooltip-copy-code-${codeId}`}>Copy Code</Tooltip>}
                             >
                               <button
                                 className="copy-code-button"
@@ -176,20 +273,9 @@ const App = () => {
                                   handleCopyCode(String(children).replace(/\n$/, ''), index, match[1])
                                 }
                               >
-                                {copiedCodeIndex[`${index}-${match[1]}`] ? <FaCheck /> : <FaCopy />}
+                                {copiedCodeIndex[codeId] ? <FaCheck /> : <FaCopy />}
                               </button>
                             </OverlayTrigger>
-                          )}
-                          {/* Render button normally on mobile */}
-                          {isMobile && (
-                            <button
-                              className="copy-code-button"
-                              onClick={() =>
-                                handleCopyCode(String(children).replace(/\n$/, ''), index, match[1])
-                              }
-                            >
-                              {copiedCodeIndex[`${index}-${match[1]}`] ? <FaCheck /> : <FaCopy />}
-                            </button>
                           )}
                         </div>
                         <SyntaxHighlighter style={oneLight} language={match[1]} PreTag="div" {...props}>
@@ -200,13 +286,31 @@ const App = () => {
                   }
                   return <code className={className} {...props}>{children}</code>;
                 },
+                blockquote({ children }) {
+                  return <blockquote className="custom-blockquote">{children}</blockquote>;
+                },
+                img({ src, alt }) {
+                  return <img src={src} alt={alt} className="md-image" />;
+                },
+                a({ href, children }) {
+                  return <a href={href} target="_blank" rel="noopener noreferrer" className="md-link">{children}</a>;
+                },
+                table({ children }) {
+                  return <table className="md-table">{children}</table>;
+                },
+                th({ children }) {
+                  return <th className="md-th">{children}</th>;
+                },
+                td({ children }) {
+                  return <td className="md-td">{children}</td>;
+                },
+                del({ children }) {
+                  return <del>{children}</del>;
+                },
               }}
-            >
-              {msg.text}
-            </ReactMarkdown>
+            />
           </div>
-  
-          {/* Only render Tooltip if not on mobile */}
+
           {!isLoading && !isMobile && (
             <OverlayTrigger
               placement="top"
@@ -217,8 +321,7 @@ const App = () => {
               </button>
             </OverlayTrigger>
           )}
-  
-          {/* Render button normally on mobile */}
+
           {!isLoading && isMobile && (
             <button className="copy-text-button" onClick={() => handleCopyText(msg.text, index)}>
               {copiedTextIndex === index ? <FaCheck /> : <FaCopy />}
@@ -228,12 +331,11 @@ const App = () => {
       )}
     </div>
   );
-  
+
   return (
     <div className="chat-container">
       <div className="header">
         <div className="name">Chatbot</div>
-        {/* Only render Tooltip if not on mobile */}
         {!isMobile && (
           <OverlayTrigger
             placement="right"
@@ -244,20 +346,19 @@ const App = () => {
             </button>
           </OverlayTrigger>
         )}
-        {/* Render button normally on mobile */}
         {isMobile && (
           <button className="reset-btn" onClick={handleResetConversation}>
             <FaRedo />
           </button>
         )}
       </div>
-  
+
       <div className="chat-box" ref={chatBoxRef}>
         {messages.length === 0 && <div className="welcome-message">How can I assist you today?</div>}
         {messages.map(renderMessage)}
         {isLoading && <div className="streaming-indicator"><GoDotFill /></div>}
       </div>
-  
+
       <div className="input-area">
         <div className="input-wrapper">
           <textarea
@@ -269,7 +370,6 @@ const App = () => {
             rows={1}
             style={{ minHeight: '100px', maxHeight: '300px', overflowY: 'auto', resize: 'none' }}
           />
-          {/* Only render Tooltip if not on mobile */}
           {!isMobile && (
             <OverlayTrigger
               placement="top"
@@ -282,9 +382,9 @@ const App = () => {
               <button
                 className={`send-btn ${input.trim() === '' && !isLoading ? 'disabled-btn' : ''}`}
                 onClick={isLoading ? handleStopStreaming : handleSendMessage}
-                disabled={input.trim() === '' && !isLoading}
+                disabled={input.trim() === '' && !isLoading }
                 style={{
-                  cursor: input.trim() === '' && !isLoading ? 'not-allowed' : 'pointer', // Adjust cursor style
+                  cursor: input.trim() === '' && !isLoading ? 'not-allowed' : 'pointer',
                 }}
               >
                 {isLoading ? <FaStopCircle /> : <FaArrowCircleUp />}
@@ -292,14 +392,13 @@ const App = () => {
             </OverlayTrigger>
           )}
 
-          {/* Render button normally on mobile */}
           {isMobile && (
             <button
               className="send-btn"
               onClick={isLoading ? handleStopStreaming : handleSendMessage}
               disabled={input.trim() === '' && !isLoading}
               style={{
-                cursor: input.trim() === '' && !isLoading ? 'not-allowed' : 'pointer', // Adjust cursor style
+                cursor: input.trim() === '' && !isLoading ? 'not-allowed' : 'pointer',
               }}
             >
               {isLoading ? <FaStopCircle /> : <FaArrowCircleUp />}
@@ -307,7 +406,7 @@ const App = () => {
           )}
         </div>
       </div>
-  
+
       <div className="footer">
         <p>Powered by Gemini</p>
       </div>
