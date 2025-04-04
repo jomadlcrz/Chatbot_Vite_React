@@ -1,22 +1,31 @@
-import React, { useState, useRef, useEffect } from 'react';
-import ReactMarkdown from 'react-markdown';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { FaRedo, FaArrowCircleUp, FaStopCircle, FaCopy, FaCheck } from 'react-icons/fa';
-import { GoDotFill } from 'react-icons/go';
-import { Tooltip, OverlayTrigger } from 'react-bootstrap';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import './App.css';
-import remarkGfm from 'remark-gfm';
+import React, { useState, useRef, useEffect } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
+import {
+  FaRedo,
+  FaArrowCircleUp,
+  FaStopCircle,
+  FaCopy,
+  FaCheck,
+} from "react-icons/fa";
+import { GoDotFill } from "react-icons/go";
+import { Tooltip, OverlayTrigger } from "react-bootstrap";
+import "bootstrap/dist/css/bootstrap.min.css";
+import "katex/dist/katex.min.css";
+import "./App.css";
+import remarkGfm from "remark-gfm";
 
 const App = () => {
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
   const [messages, setMessages] = useState(() => {
     try {
-      const savedMessages = localStorage.getItem('chat_messages');
+      const savedMessages = localStorage.getItem("chat_messages");
       return savedMessages ? JSON.parse(savedMessages) : [];
     } catch (error) {
-      console.error('Error loading saved messages:', error);
+      console.error("Error loading saved messages:", error);
       return [];
     }
   });
@@ -36,7 +45,7 @@ const App = () => {
   // Manage auto-scrolling with improved user scroll detection
   const scrollToBottom = (force = false) => {
     if (!chatBoxRef.current) return;
-    
+
     if (force || autoScrollEnabledRef.current) {
       const chatBox = chatBoxRef.current;
       chatBox.scrollTop = chatBox.scrollHeight;
@@ -48,7 +57,7 @@ const App = () => {
     if (messages.length > 0) {
       // If this is a new user message, force scroll and re-enable auto-scroll
       const lastMessage = messages[messages.length - 1];
-      if (lastMessage.role === 'user') {
+      if (lastMessage.role === "user") {
         autoScrollEnabledRef.current = true;
         userHasScrolledRef.current = false;
         scrollToBottom(true);
@@ -62,26 +71,26 @@ const App = () => {
   // Set up scroll event detection
   useEffect(() => {
     if (!chatBoxRef.current) return;
-    
+
     const chatBox = chatBoxRef.current;
-    
+
     const handleScroll = (e) => {
       // If programmatic scrolling is happening, ignore this event
       if (scrollTimeoutRef.current) return;
-      
+
       const { scrollTop, scrollHeight, clientHeight } = chatBox;
       const isAtBottom = Math.abs(scrollHeight - clientHeight - scrollTop) < 5;
       const isScrollingUp = scrollTop < lastScrollTopRef.current;
-      
+
       // Store the current scroll position for next comparison
       lastScrollTopRef.current = scrollTop;
-      
+
       // If user is scrolling up, disable auto-scroll
       if (isScrollingUp && !isAtBottom) {
         autoScrollEnabledRef.current = false;
         userHasScrolledRef.current = true;
       }
-      
+
       // If user manually scrolled to bottom, re-enable auto-scroll
       if (isAtBottom && userHasScrolledRef.current) {
         autoScrollEnabledRef.current = true;
@@ -89,8 +98,8 @@ const App = () => {
       }
     };
 
-    chatBox.addEventListener('scroll', handleScroll);
-    return () => chatBox.removeEventListener('scroll', handleScroll);
+    chatBox.addEventListener("scroll", handleScroll);
+    return () => chatBox.removeEventListener("scroll", handleScroll);
   }, []);
 
   const initializeWorker = () => {
@@ -99,37 +108,45 @@ const App = () => {
     }
 
     try {
-      workerRef.current = new Worker(new URL('./worker.js', import.meta.url), { type: 'module' });
+      workerRef.current = new Worker(new URL("./worker.js", import.meta.url), {
+        type: "module",
+      });
 
       workerRef.current.onmessage = (event) => {
         const { type, text, message } = event.data;
 
-        if (type === 'update') {
+        if (type === "update") {
           setMessages((prev) => {
             const lastMessage = prev[prev.length - 1];
-            return lastMessage?.role === 'model'
-              ? [...prev.slice(0, -1), { role: 'model', text }]
-              : [...prev, { role: 'model', text }];
+            return lastMessage?.role === "model"
+              ? [...prev.slice(0, -1), { role: "model", text }]
+              : [...prev, { role: "model", text }];
           });
-        } else if (type === 'done') {
+        } else if (type === "done") {
           setIsLoading(false);
-        } else if (type === 'error') {
-          console.error('Worker Error:', message);
-          setMessages((prev) => [...prev, { role: 'model', text: `Error: ${message}` }]);
+        } else if (type === "error") {
+          console.error("Worker Error:", message);
+          setMessages((prev) => [
+            ...prev,
+            { role: "model", text: `Error: ${message}` },
+          ]);
           setIsLoading(false);
         }
       };
 
       workerRef.current.onerror = (error) => {
-        console.error('Worker initialization error:', error);
+        console.error("Worker initialization error:", error);
         setIsLoading(false);
-        setMessages((prev) => [...prev, { 
-          role: 'model', 
-          text: 'Sorry, there was an error with the chatbot service. Please try again later.' 
-        }]);
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "model",
+            text: "Sorry, there was an error with the chatbot service. Please try again later.",
+          },
+        ]);
       };
     } catch (error) {
-      console.error('Failed to initialize worker:', error);
+      console.error("Failed to initialize worker:", error);
       setIsLoading(false);
     }
   };
@@ -145,9 +162,9 @@ const App = () => {
 
   useEffect(() => {
     try {
-      localStorage.setItem('chat_messages', JSON.stringify(messages));
+      localStorage.setItem("chat_messages", JSON.stringify(messages));
     } catch (error) {
-      console.error('Error saving messages to localStorage:', error);
+      console.error("Error saving messages to localStorage:", error);
     }
   }, [messages]);
 
@@ -157,26 +174,26 @@ const App = () => {
     };
 
     checkIfMobile();
-    window.addEventListener('resize', checkIfMobile);
+    window.addEventListener("resize", checkIfMobile);
 
     return () => {
-      window.removeEventListener('resize', checkIfMobile);
+      window.removeEventListener("resize", checkIfMobile);
     };
   }, []);
 
   useEffect(() => {
     if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = "auto";
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
     }
   }, [input]);
 
   const handleSendMessage = async () => {
-    if (input.trim() === '') return;
+    if (input.trim() === "") return;
 
-    const userMessage = { role: 'user', text: input.trim() };
+    const userMessage = { role: "user", text: input.trim() };
     setMessages((prev) => [...prev, userMessage]);
-    setInput('');
+    setInput("");
     setIsLoading(true);
 
     workerRef.current.postMessage({
@@ -200,12 +217,12 @@ const App = () => {
       initializeWorker();
     }
     setMessages([]);
-    localStorage.removeItem('chat_messages');
+    localStorage.removeItem("chat_messages");
     setIsLoading(false);
   };
 
   const handleKeyDown = (e) => {
-    if (!isMobile && e.key === 'Enter' && !e.shiftKey) {
+    if (!isMobile && e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
@@ -235,18 +252,24 @@ const App = () => {
   };
 
   const renderMessage = (msg, index) => (
-    <div key={index} className={`message ${msg.role === 'user' ? 'user-message' : 'bot-message'}`}>
-      {msg.role === 'user' ? (
+    <div
+      key={index}
+      className={`message ${
+        msg.role === "user" ? "user-message" : "bot-message"
+      }`}
+    >
+      {msg.role === "user" ? (
         <div className="user-message-text">{msg.text}</div>
       ) : (
         <div className="bot-message-container">
-          <div className="message-content" style={{ padding: '10px' }}>
+          <div className="message-content" style={{ padding: "10px" }}>
             <ReactMarkdown
-              children={msg.text}
-              remarkPlugins={[remarkGfm]}
-              components={{
+            children={msg.text}
+            remarkPlugins={[remarkGfm, remarkMath]}
+            rehypePlugins={[rehypeKatex]}
+            components={{
                 code({ inline, className, children, ...props }) {
-                  const match = /language-(\w+)/.exec(className || '');
+                  const match = /language-(\w+)/.exec(className || "");
                   if (!inline && match) {
                     const codeId = `${index}-${match[1]}`;
                     return (
@@ -257,43 +280,85 @@ const App = () => {
                             <button
                               className="copy-code-button"
                               onClick={() =>
-                                handleCopyCode(String(children).replace(/\n$/, ''), index, match[1])
+                                handleCopyCode(
+                                  String(children).replace(/\n$/, ""),
+                                  index,
+                                  match[1]
+                                )
                               }
                             >
-                              {copiedCodeIndex[codeId] ? <FaCheck /> : <FaCopy />}
+                              {copiedCodeIndex[codeId] ? (
+                                <FaCheck />
+                              ) : (
+                                <FaCopy />
+                              )}
                             </button>
                           ) : (
                             <OverlayTrigger
                               placement="top"
-                              overlay={<Tooltip id={`tooltip-copy-code-${codeId}`}>Copy Code</Tooltip>}
+                              overlay={
+                                <Tooltip id={`tooltip-copy-code-${codeId}`}>
+                                  Copy Code
+                                </Tooltip>
+                              }
                             >
                               <button
                                 className="copy-code-button"
                                 onClick={() =>
-                                  handleCopyCode(String(children).replace(/\n$/, ''), index, match[1])
+                                  handleCopyCode(
+                                    String(children).replace(/\n$/, ""),
+                                    index,
+                                    match[1]
+                                  )
                                 }
                               >
-                                {copiedCodeIndex[codeId] ? <FaCheck /> : <FaCopy />}
+                                {copiedCodeIndex[codeId] ? (
+                                  <FaCheck />
+                                ) : (
+                                  <FaCopy />
+                                )}
                               </button>
                             </OverlayTrigger>
                           )}
                         </div>
-                        <SyntaxHighlighter style={oneLight} language={match[1]} PreTag="div" {...props}>
-                          {String(children).replace(/\n$/, '')}
+                        <SyntaxHighlighter
+                          style={oneLight}
+                          language={match[1]}
+                          PreTag="div"
+                          {...props}
+                        >
+                          {String(children).replace(/\n$/, "")}
                         </SyntaxHighlighter>
                       </div>
                     );
                   }
-                  return <code className={className} {...props}>{children}</code>;
+                  return (
+                    <code className={className} {...props}>
+                      {children}
+                    </code>
+                  );
                 },
                 blockquote({ children }) {
-                  return <blockquote className="custom-blockquote">{children}</blockquote>;
+                  return (
+                    <blockquote className="custom-blockquote">
+                      {children}
+                    </blockquote>
+                  );
                 },
                 img({ src, alt }) {
                   return <img src={src} alt={alt} className="md-image" />;
                 },
                 a({ href, children }) {
-                  return <a href={href} target="_blank" rel="noopener noreferrer" className="md-link">{children}</a>;
+                  return (
+                    <a
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="md-link"
+                    >
+                      {children}
+                    </a>
+                  );
                 },
                 table({ children }) {
                   return <table className="md-table">{children}</table>;
@@ -316,14 +381,20 @@ const App = () => {
               placement="top"
               overlay={<Tooltip id="tooltip-copy-text">Copy Text</Tooltip>}
             >
-              <button className="copy-text-button" onClick={() => handleCopyText(msg.text, index)}>
+              <button
+                className="copy-text-button"
+                onClick={() => handleCopyText(msg.text, index)}
+              >
                 {copiedTextIndex === index ? <FaCheck /> : <FaCopy />}
               </button>
             </OverlayTrigger>
           )}
 
           {!isLoading && isMobile && (
-            <button className="copy-text-button" onClick={() => handleCopyText(msg.text, index)}>
+            <button
+              className="copy-text-button"
+              onClick={() => handleCopyText(msg.text, index)}
+            >
               {copiedTextIndex === index ? <FaCheck /> : <FaCopy />}
             </button>
           )}
@@ -354,9 +425,15 @@ const App = () => {
       </div>
 
       <div className="chat-box" ref={chatBoxRef}>
-        {messages.length === 0 && <div className="welcome-message">How can I assist you today?</div>}
+        {messages.length === 0 && (
+          <div className="welcome-message">How can I assist you today?</div>
+        )}
         {messages.map(renderMessage)}
-        {isLoading && <div className="streaming-indicator"><GoDotFill /></div>}
+        {isLoading && (
+          <div className="streaming-indicator">
+            <GoDotFill />
+          </div>
+        )}
       </div>
 
       <div className="input-area">
@@ -368,23 +445,37 @@ const App = () => {
             onKeyDown={handleKeyDown}
             placeholder="Message Chatbot"
             rows={1}
-            style={{ minHeight: '100px', maxHeight: '300px', overflowY: 'auto', resize: 'none' }}
+            style={{
+              minHeight: "100px",
+              maxHeight: "300px",
+              overflowY: "auto",
+              resize: "none",
+            }}
           />
           {!isMobile && (
             <OverlayTrigger
               placement="top"
               overlay={
                 <Tooltip id="tooltip-send">
-                  {isLoading ? 'Stop' : input.trim() === '' ? 'Message is empty' : 'Send'}
+                  {isLoading
+                    ? "Stop"
+                    : input.trim() === ""
+                    ? "Message is empty"
+                    : "Send"}
                 </Tooltip>
               }
             >
               <button
-                className={`send-btn ${input.trim() === '' && !isLoading ? 'disabled-btn' : ''}`}
+                className={`send-btn ${
+                  input.trim() === "" && !isLoading ? "disabled-btn" : ""
+                }`}
                 onClick={isLoading ? handleStopStreaming : handleSendMessage}
-                disabled={input.trim() === '' && !isLoading }
+                disabled={input.trim() === "" && !isLoading}
                 style={{
-                  cursor: input.trim() === '' && !isLoading ? 'not-allowed' : 'pointer',
+                  cursor:
+                    input.trim() === "" && !isLoading
+                      ? "not-allowed"
+                      : "pointer",
                 }}
               >
                 {isLoading ? <FaStopCircle /> : <FaArrowCircleUp />}
@@ -396,9 +487,10 @@ const App = () => {
             <button
               className="send-btn"
               onClick={isLoading ? handleStopStreaming : handleSendMessage}
-              disabled={input.trim() === '' && !isLoading}
+              disabled={input.trim() === "" && !isLoading}
               style={{
-                cursor: input.trim() === '' && !isLoading ? 'not-allowed' : 'pointer',
+                cursor:
+                  input.trim() === "" && !isLoading ? "not-allowed" : "pointer",
               }}
             >
               {isLoading ? <FaStopCircle /> : <FaArrowCircleUp />}

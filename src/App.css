@@ -162,7 +162,7 @@ textarea::placeholder {
   margin-left: auto;
   background-color: #007bff;
   color: white;
-  border-radius: 30px;
+  border-radius: 8px;
   padding: 16px;
 }
 
