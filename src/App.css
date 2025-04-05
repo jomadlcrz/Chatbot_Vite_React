@@ -8,7 +8,6 @@ html {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-/* Custom Scrollbar Styling */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -28,7 +27,6 @@ html {
   background-color: hsla(210, 100%, 70%, 1);
 }
 
-/* Fixed Header */
 .header {
   display: flex;
   align-items: center;
@@ -41,7 +39,7 @@ html {
   left: 0;
   right: 0;
   z-index: 1000;
-  height: 60px; /* Fixed height for the header */
+  height: 60px;
 }
 
 .header .name {
@@ -49,7 +47,6 @@ html {
   font-weight: bold;
 }
 
-/* Fixed Input Area */
 .input-area {
   position: fixed;
   bottom: 0;
@@ -124,30 +121,27 @@ textarea::placeholder {
   }
 }
 
-/* Tooltip container */
 .send-btn-wrapper {
   position: relative;
   display: inline-block;
 }
 
-/* Chat Container */
 .chat-container {
   display: flex;
   flex-direction: column;
-  height: 100dvh; /* Dynamic viewport height for mobile compatibility */
+  height: 100dvh;
   max-width: 800px;
   margin: 0 auto;
   overflow: hidden;
   position: relative;
 }
 
-/* Chat Box */
 .chat-box {
   flex: 1;
   overflow-y: auto;
   padding: 15px;
-  margin-top: 60px; /* Space for the fixed header */
-  margin-bottom: 160px; /* Space for the fixed input area */
+  margin-top: 60px;
+  margin-bottom: 160px;
 }
 
 .message {
@@ -203,7 +197,6 @@ textarea::placeholder {
   margin: 0;
 }
 
-/* Reset Button */
 .reset-btn {
   background: none;
   border: none;
@@ -228,13 +221,11 @@ textarea::placeholder {
   outline: none;
 }
 
-/* Tooltip container */
 .reset-btn-wrapper {
   position: relative;
   display: inline-block;
 }
 
-/* Media Queries */
 @media (max-width: 768px) {
   .header .name {
     font-size: 18px;
@@ -288,13 +279,11 @@ textarea::placeholder {
   }
 }
 
-/* Disable tap highlight for non desktop */
 .send-btn-wrapper,
 .reset-btn {
-  -webkit-tap-highlight-color: transparent; /* Disable tap highlight */
+  -webkit-tap-highlight-color: transparent;
 }
 
-/* Ensure the Markdown container and code block are compact */
 .message-content {
   max-width: 100%;
   word-wrap: break-word;
@@ -302,23 +291,20 @@ textarea::placeholder {
   line-height: 1.6;
 }
 
-/* Markdown Paragraphs - Tight Spacing */
 .markdown-paragraph {
   margin: 8px 0;
   padding-bottom: 0;
 }
 
-/* Code Block Container - No Extra Space */
 .code-block-container {
   position: relative;
   background: #f6f8fa;
   border-radius: 8px;
   overflow: auto;
-  margin: 10px 0; /* Ensures it's close to text */
+  margin: 10px 0;
   border: 1px solid #ddd;
 }
 
-/* Code Header - Sticks Directly to the Code */
 .code-block-header {
   display: flex;
   justify-content: space-between;
@@ -331,12 +317,10 @@ textarea::placeholder {
   border-bottom: 1px solid #ddd;
 }
 
-/* Language Label */
 .code-label {
   color: #555;
 }
 
-/* Copy Button */
 .copy-code-button {
   background: transparent;
   border: none;
@@ -349,14 +333,13 @@ textarea::placeholder {
   color: #222;
 }
 
-/* Streaming Indicator */
 .streaming-indicator {
   display: flex;
   align-items: center;
   margin-top: 8px;
 }
 
-.streaming-indicator svg { 
+.streaming-indicator svg {
   color: #007bff;
   animation: blink 1s infinite;
 }
@@ -374,28 +357,30 @@ textarea::placeholder {
 }
 
 .copy-text-button {
-  border: none;  /* Remove border */
-  background: transparent; /* Optional: removes background if present */
+  border: none;
+  background: transparent;
   cursor: pointer;
   margin-left: 10px;
   gap: 5px;
 }
+
 .message-content {
   max-width: 100%;
-  white-space: pre-wrap; /* This will enable markdown text to wrap */
+  white-space: pre-wrap;
 }
 
-code, pre {
-  word-wrap: break-word; /* Allow code to break into a new line if needed */
-  overflow-wrap: break-word; /* Breaks long code lines */
-  white-space: normal; /* Allows normal wrapping */
+code,
+pre {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
 }
 
-/* Tooltip styling to avoid layout shift */
 .tooltip {
-  position: fixed !important;  /* Position it fixed */
-  z-index: 9999;  /* Make sure it's above other elements */
+  position: fixed !important;
+  z-index: 9999;
 }
+
 .md-table {
   width: 100%;
   border-collapse: collapse;
@@ -405,7 +390,8 @@ code, pre {
   overflow: hidden;
 }
 
-.md-th, .md-td {
+.md-th,
+.md-td {
   padding: 12px 15px;
   text-align: left;
   border: 1px solid #ddd;
@@ -451,6 +437,7 @@ code, pre {
   width: 100%;
   margin-top: 10px;
 }
+
 .custom-blockquote {
   border-left: 4px solid #ccc;
   margin: 10px 0;

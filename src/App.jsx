@@ -264,10 +264,10 @@ const App = () => {
         <div className="bot-message-container">
           <div className="message-content" style={{ padding: "10px" }}>
             <ReactMarkdown
-            children={msg.text}
-            remarkPlugins={[remarkGfm, remarkMath]}
-            rehypePlugins={[rehypeKatex]}
-            components={{
+              children={msg.text}
+              remarkPlugins={[remarkGfm, remarkMath]}
+              rehypePlugins={[rehypeKatex]}
+              components={{
                 code({ inline, className, children, ...props }) {
                   const match = /language-(\w+)/.exec(className || "");
                   if (!inline && match) {
