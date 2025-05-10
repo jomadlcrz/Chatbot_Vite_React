@@ -173,9 +173,18 @@ textarea::placeholder {
   text-align: center;
   white-space: pre-wrap;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   height: 100%;
+  gap: 10px;
+}
+
+.powered-by {
+  font-size: 18px;
+  color: #666;
+  font-weight: normal;
+  font-style: italic;
 }
 
 .footer {

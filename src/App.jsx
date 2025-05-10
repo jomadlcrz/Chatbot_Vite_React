@@ -192,14 +192,15 @@ const App = () => {
     if (input.trim() === "") return;
 
     const userMessage = { role: "user", text: input.trim() };
-    setMessages((prev) => [...prev, userMessage]);
+    const updatedMessages = [...messages, userMessage];
+    setMessages(updatedMessages);
     setInput("");
     setIsLoading(true);
 
     workerRef.current.postMessage({
       input: input.trim(),
-      messages,
-      apiKey: import.meta.env.VITE_GEMINI_API_KEY,
+      messages: updatedMessages,
+      apiKey: import.meta.env.VITE_OPENAI_API_KEY,
     });
   };
 
@@ -426,7 +427,11 @@ const App = () => {
 
       <div className="chat-box" ref={chatBoxRef}>
         {messages.length === 0 && (
-          <div className="welcome-message">How can I assist you today?</div>
+          <div className="welcome-message">
+            👋 Hi there! I'm your friendly AI assistant.
+            <br />
+            <span className="powered-by">Powered by OpenAI</span>
+          </div>
         )}
         {messages.map(renderMessage)}
         {isLoading && (
@@ -500,7 +505,12 @@ const App = () => {
       </div>
 
       <div className="footer">
-        <p>Powered by Gemini</p>
+        <p>
+          Made with ❤️ by{" "}
+          <a href="https://github.com/jomadlcrz" target="_blank">
+            jomadlcrz
+          </a>
+        </p>
       </div>
     </div>
   );

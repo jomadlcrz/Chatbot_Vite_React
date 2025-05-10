@@ -10,12 +10,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@google/generative-ai": "^0.21.0",
     "bootstrap": "^5.3.5",
     "dompurify": "^3.2.4",
     "highlight.js": "^11.11.1",
     "katex": "^0.16.21",
     "marked": "^15.0.7",
+    "openai": "^4.28.0",
     "react": "^19.1.0",
     "react-bootstrap": "^2.10.9",
     "react-dom": "^19.1.0",
