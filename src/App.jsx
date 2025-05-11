@@ -12,25 +12,11 @@ import {
   FaCheck,
 } from "react-icons/fa";
 import { GoDotFill } from "react-icons/go";
-import { Tooltip, OverlayTrigger, Modal, Button } from "react-bootstrap";
+import { Tooltip, OverlayTrigger } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "katex/dist/katex.min.css";
 import "./App.css";
 import remarkGfm from "remark-gfm";
-
-const SplashScreen = () => (
-  <div className="splash-screen">
-    <div className="splash-content">
-      <div className="splash-logo">🤖</div>
-      <h1>Chatbot</h1>
-      <div className="loading-dots">
-        <span></span>
-        <span></span>
-        <span></span>
-      </div>
-    </div>
-  </div>
-);
 
 const App = () => {
   const [input, setInput] = useState("");
@@ -47,8 +33,6 @@ const App = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [copiedTextIndex, setCopiedTextIndex] = useState(null);
   const [copiedCodeIndex, setCopiedCodeIndex] = useState({});
-  const [showSplash, setShowSplash] = useState(true);
-  const [showResetModal, setShowResetModal] = useState(false);
 
   const workerRef = useRef(null);
   const chatBoxRef = useRef(null);
@@ -236,11 +220,6 @@ const App = () => {
     setMessages([]);
     localStorage.removeItem("chat_messages");
     setIsLoading(false);
-    setShowResetModal(false);
-  };
-
-  const handleResetClick = () => {
-    setShowResetModal(true);
   };
 
   const handleKeyDown = (e) => {
@@ -425,155 +404,114 @@ const App = () => {
     </div>
   );
 
-  useEffect(() => {
-    // Hide splash screen after 2 seconds
-    const timer = setTimeout(() => {
-      setShowSplash(false);
-    }, 2000);
-
-    return () => clearTimeout(timer);
-  }, []);
-
   return (
     <div className="chat-container">
-      {showSplash ? (
-        <SplashScreen />
-      ) : (
-        <>
-          <div className="header">
-            <div className="header-content">
-              <div className="name">Chatbot</div>
-              {messages.length > 0 && (
-                <>
-                  {!isMobile && (
-                    <OverlayTrigger
-                      placement="left"
-                      overlay={<Tooltip id="tooltip-reset">Reset Conversation</Tooltip>}
-                    >
-                      <button className="reset-btn" onClick={handleResetClick}>
-                        <FaRedo />
-                      </button>
-                    </OverlayTrigger>
-                  )}
-                  {isMobile && (
-                    <button className="reset-btn" onClick={handleResetClick}>
-                      <FaRedo />
-                    </button>
-                  )}
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* Reset Confirmation Modal */}
-          <Modal
-            show={showResetModal}
-            onHide={() => setShowResetModal(false)}
-            centered
-            className="reset-modal"
+      <div className="header">
+        <div className="name">Chatbot</div>
+        {!isMobile && (
+          <OverlayTrigger
+            placement="right"
+            overlay={<Tooltip id="tooltip-reset">Reset Conversation</Tooltip>}
           >
-            <Modal.Header closeButton>
-              <Modal.Title>Reset Conversation</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-              Are you sure you want to reset the conversation? This will clear all messages and cannot be undone.
-            </Modal.Body>
-            <Modal.Footer>
-              <Button variant="danger" onClick={handleResetConversation}>
-                Reset
-              </Button>
-            </Modal.Footer>
-          </Modal>
+            <button className="reset-btn" onClick={handleResetConversation}>
+              <FaRedo />
+            </button>
+          </OverlayTrigger>
+        )}
+        {isMobile && (
+          <button className="reset-btn" onClick={handleResetConversation}>
+            <FaRedo />
+          </button>
+        )}
+      </div>
 
-          <div className="chat-box" ref={chatBoxRef}>
-            {messages.length === 0 && (
-              <div className="welcome-message">
-                👋 Hi there! I'm your friendly AI assistant.
-                <br />
-                <span className="powered-by">Powered by OpenAI</span>
-              </div>
-            )}
-            {messages.map(renderMessage)}
-            {isLoading && (
-              <div className="streaming-indicator">
-                <GoDotFill />
-              </div>
-            )}
+      <div className="chat-box" ref={chatBoxRef}>
+        {messages.length === 0 && (
+          <div className="welcome-message">
+            👋 Hi there! I'm your friendly AI assistant.
+            <br />
+            <span className="powered-by">Powered by OpenAI</span>
           </div>
+        )}
+        {messages.map(renderMessage)}
+        {isLoading && (
+          <div className="streaming-indicator">
+            <GoDotFill />
+          </div>
+        )}
+      </div>
 
-          <div className="input-area">
-            <div className="input-wrapper">
-              <textarea
-                ref={textareaRef}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Message Chatbot"
-                rows={1}
+      <div className="input-area">
+        <div className="input-wrapper">
+          <textarea
+            ref={textareaRef}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Message Chatbot"
+            rows={1}
+            style={{
+              minHeight: "100px",
+              maxHeight: "300px",
+              overflowY: "auto",
+              resize: "none",
+            }}
+          />
+          {!isMobile && (
+            <OverlayTrigger
+              placement="top"
+              overlay={
+                <Tooltip id="tooltip-send">
+                  {isLoading
+                    ? "Stop"
+                    : input.trim() === ""
+                    ? "Message is empty"
+                    : "Send"}
+                </Tooltip>
+              }
+            >
+              <button
+                className={`send-btn ${
+                  input.trim() === "" && !isLoading ? "disabled-btn" : ""
+                }`}
+                onClick={isLoading ? handleStopStreaming : handleSendMessage}
+                disabled={input.trim() === "" && !isLoading}
                 style={{
-                  minHeight: "100px",
-                  maxHeight: "300px",
-                  overflowY: "auto",
-                  resize: "none",
+                  cursor:
+                    input.trim() === "" && !isLoading
+                      ? "not-allowed"
+                      : "pointer",
                 }}
-              />
-              {!isMobile && (
-                <OverlayTrigger
-                  placement="top"
-                  overlay={
-                    <Tooltip id="tooltip-send">
-                      {isLoading
-                        ? "Stop"
-                        : input.trim() === ""
-                        ? "Message is empty"
-                        : "Send"}
-                    </Tooltip>
-                  }
-                >
-                  <button
-                    className={`send-btn ${
-                      input.trim() === "" && !isLoading ? "disabled-btn" : ""
-                    }`}
-                    onClick={isLoading ? handleStopStreaming : handleSendMessage}
-                    disabled={input.trim() === "" && !isLoading}
-                    style={{
-                      cursor:
-                        input.trim() === "" && !isLoading
-                          ? "not-allowed"
-                          : "pointer",
-                    }}
-                  >
-                    {isLoading ? <FaStopCircle /> : <FaArrowCircleUp />}
-                  </button>
-                </OverlayTrigger>
-              )}
+              >
+                {isLoading ? <FaStopCircle /> : <FaArrowCircleUp />}
+              </button>
+            </OverlayTrigger>
+          )}
 
-              {isMobile && (
-                <button
-                  className="send-btn"
-                  onClick={isLoading ? handleStopStreaming : handleSendMessage}
-                  disabled={input.trim() === "" && !isLoading}
-                  style={{
-                    cursor:
-                      input.trim() === "" && !isLoading ? "not-allowed" : "pointer",
-                  }}
-                >
-                  {isLoading ? <FaStopCircle /> : <FaArrowCircleUp />}
-                </button>
-              )}
-            </div>
-          </div>
+          {isMobile && (
+            <button
+              className="send-btn"
+              onClick={isLoading ? handleStopStreaming : handleSendMessage}
+              disabled={input.trim() === "" && !isLoading}
+              style={{
+                cursor:
+                  input.trim() === "" && !isLoading ? "not-allowed" : "pointer",
+              }}
+            >
+              {isLoading ? <FaStopCircle /> : <FaArrowCircleUp />}
+            </button>
+          )}
+        </div>
+      </div>
 
-          <div className="footer">
-            <p>
-              Made with ❤️ by{" "}
-              <a href="https://github.com/jomadlcrz" target="_blank">
-                jomadlcrz
-              </a>
-            </p>
-          </div>
-        </>
-      )}
+      <div className="footer">
+        <p>
+          Made with ❤️ by{" "}
+          <a href="https://github.com/jomadlcrz" target="_blank">
+            jomadlcrz
+          </a>
+        </p>
+      </div>
     </div>
   );
 };
