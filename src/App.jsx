@@ -12,7 +12,7 @@ import {
   FaCheck,
 } from "react-icons/fa";
 import { GoDotFill } from "react-icons/go";
-import { Tooltip, OverlayTrigger } from "react-bootstrap";
+import { Tooltip, OverlayTrigger, Modal, Button } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "katex/dist/katex.min.css";
 import "./App.css";
@@ -33,6 +33,7 @@ const App = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [copiedTextIndex, setCopiedTextIndex] = useState(null);
   const [copiedCodeIndex, setCopiedCodeIndex] = useState({});
+  const [showResetModal, setShowResetModal] = useState(false);
 
   const workerRef = useRef(null);
   const chatBoxRef = useRef(null);
@@ -220,6 +221,7 @@ const App = () => {
     setMessages([]);
     localStorage.removeItem("chat_messages");
     setIsLoading(false);
+    setShowResetModal(false);
   };
 
   const handleKeyDown = (e) => {
@@ -413,17 +415,41 @@ const App = () => {
             placement="right"
             overlay={<Tooltip id="tooltip-reset">Reset Conversation</Tooltip>}
           >
-            <button className="reset-btn" onClick={handleResetConversation}>
+            <button 
+              className="reset-btn" 
+              onClick={() => messages.length > 0 ? setShowResetModal(true) : handleResetConversation()}
+            >
               <FaRedo />
             </button>
           </OverlayTrigger>
         )}
         {isMobile && (
-          <button className="reset-btn" onClick={handleResetConversation}>
+          <button 
+            className="reset-btn" 
+            onClick={() => messages.length > 0 ? setShowResetModal(true) : handleResetConversation()}
+          >
             <FaRedo />
           </button>
         )}
       </div>
+
+      {/* Reset Confirmation Modal */}
+      <Modal show={showResetModal} onHide={() => setShowResetModal(false)} centered>
+        <Modal.Header>
+          <Modal.Title>Reset Conversation</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          Are you sure you want to reset the conversation? This will clear all messages and cannot be undone.
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowResetModal(false)}>
+            Cancel
+          </Button>
+          <Button variant="danger" onClick={handleResetConversation}>
+            Reset
+          </Button>
+        </Modal.Footer>
+      </Modal>
 
       <div className="chat-box" ref={chatBoxRef}>
         {messages.length === 0 && (
