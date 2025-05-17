@@ -147,7 +147,6 @@ textarea::placeholder {
 .message {
   margin-bottom: 12px;
   padding: 12px;
-  max-width: 75%;
   width: fit-content;
   white-space: pre-wrap;
 }
@@ -158,10 +157,21 @@ textarea::placeholder {
   color: white;
   border-radius: 8px;
   padding: 16px;
+  max-width: 75%;
 }
 
 .bot-message {
   margin-right: auto;
+  width: 100%;
+  max-width: 100%;
+}
+
+.bot-message-container {
+  width: 100%;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 16px;
+  border: 1px solid #ddd;
 }
 
 .welcome-message {
